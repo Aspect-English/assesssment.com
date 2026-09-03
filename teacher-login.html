@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>老師後台登入｜Aspect English</title>
+
+  <link
+    rel="icon"
+    href="favicon.svg"
+    type="image/svg+xml"
+  >
+
+  <link
+    rel="stylesheet"
+    href="teacher-login.css"
+  >
+</head>
+
+<body>
+
+  <main class="login-layout">
+
+    <section class="brand-panel">
+
+      <div class="brand-content">
+
+        <div class="brand-mark">A</div>
+
+        <p class="eyebrow">
+          ASPECT ENGLISH
+        </p>
+
+        <h1>
+          TOEIC Speaking & Writing
+          <span>Assessment Platform</span>
+        </h1>
+
+        <p class="brand-description">
+          統一管理題庫、測驗版本、學生作答紀錄與錄音。
+        </p>
+
+        <div class="feature-list">
+
+          <div>
+            <strong>安全登入</strong>
+            <span>Supabase Auth 與角色權限驗證</span>
+          </div>
+
+          <div>
+            <strong>動態題庫</strong>
+            <span>學生端自動載入已發布內容</span>
+          </div>
+
+          <div>
+            <strong>後續擴充</strong>
+            <span>題目編輯、組卷、AI 評分與報表</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="form-panel">
+
+      <div class="login-card">
+
+        <a
+          class="back-link"
+          href="index.html"
+        >
+          ← 返回學生端
+        </a>
+
+        <div class="login-heading">
+
+          <span class="portal-chip">
+            Teacher Portal
+          </span>
+
+          <h2>老師後台登入</h2>
+
+          <p>
+            請使用已建立於 Supabase Authentication
+            的老師帳號登入。
+          </p>
+
+        </div>
+
+
+        <div
+          id="loginMessage"
+          class="login-message hidden"
+          role="alert"
+        ></div>
+
+
+        <form id="loginForm">
+
+          <label class="field-group">
+
+            <span>Email</span>
+
+            <input
+              id="emailInput"
+              name="email"
+              type="email"
+              autocomplete="username"
+              placeholder="name@example.com"
+              required
+            >
+
+          </label>
+
+
+          <label class="field-group">
+
+            <span>密碼</span>
+
+            <div class="password-wrapper">
+
+              <input
+                id="passwordInput"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="請輸入密碼"
+                minlength="6"
+                required
+              >
+
+              <button
+                id="togglePasswordButton"
+                class="toggle-password"
+                type="button"
+                aria-label="顯示密碼"
+              >
+                顯示
+              </button>
+
+            </div>
+
+          </label>
+
+
+          <label class="remember-row">
+
+            <input
+              id="rememberInput"
+              type="checkbox"
+              checked
+            >
+
+            <span>保持登入狀態</span>
+
+          </label>
+
+
+          <button
+            id="loginButton"
+            class="login-button"
+            type="submit"
+          >
+            <span id="loginButtonText">
+              登入老師後台
+            </span>
+
+            <span
+              id="loginSpinner"
+              class="spinner hidden"
+            ></span>
+          </button>
+
+        </form>
+
+
+        <div class="security-note">
+          <strong>帳號安全提醒</strong>
+          <p>
+            請勿共用管理員密碼。每位老師後續都會建立獨立帳號與權限。
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="config.js"></script>
+  <script src="supabase-service.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="teacher-login.js"></script>
+
+</body>
+</html>

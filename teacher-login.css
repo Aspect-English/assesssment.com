@@ -1,0 +1,407 @@
+:root {
+  --primary: #6d4cbe;
+  --primary-dark: #533597;
+  --primary-soft: #f0eaff;
+  --ink: #252033;
+  --muted: #746e7d;
+  --border: #e5e1ec;
+  --danger: #a92534;
+  --danger-bg: #ffe7ea;
+  --success: #17653f;
+  --success-bg: #e2f6ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: #f7f5fa;
+  font-family:
+    "Microsoft JhengHei",
+    "Noto Sans TC",
+    Arial,
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.login-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns:
+    minmax(360px, 0.9fr)
+    minmax(460px, 1.1fr);
+}
+
+.brand-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 64px;
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(255,255,255,0.14),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #241a3f 0%,
+      #513493 52%,
+      #7555c5 100%
+    );
+}
+
+.brand-panel::after {
+  content: "";
+  position: absolute;
+  right: -120px;
+  bottom: -140px;
+  width: 410px;
+  height: 410px;
+  border:
+    1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 58px rgba(255,255,255,0.04),
+    0 0 0 116px rgba(255,255,255,0.025);
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+}
+
+.brand-mark {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 28px;
+  display: grid;
+  place-items: center;
+  color: #5a3aa4;
+  background: #ffffff;
+  border-radius: 17px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #d9cff5;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.brand-content h1 {
+  margin: 0;
+  font-size: clamp(36px, 4.5vw, 62px);
+  line-height: 1.08;
+}
+
+.brand-content h1 span {
+  display: block;
+  margin-top: 8px;
+  color: #dcd2fa;
+  font-size: 0.56em;
+  font-weight: 600;
+}
+
+.brand-description {
+  max-width: 500px;
+  margin: 24px 0 34px;
+  color: #e9e3f7;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.feature-list {
+  display: grid;
+  gap: 13px;
+}
+
+.feature-list > div {
+  padding: 15px 17px;
+  background:
+    rgba(255,255,255,0.09);
+  border:
+    1px solid rgba(255,255,255,0.12);
+  border-radius: 13px;
+  backdrop-filter: blur(8px);
+}
+
+.feature-list strong,
+.feature-list span {
+  display: block;
+}
+
+.feature-list strong {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.feature-list span {
+  color: #ddd5ef;
+  font-size: 12px;
+}
+
+.form-panel {
+  padding: 46px;
+  display: grid;
+  place-items: center;
+}
+
+.login-card {
+  width: min(470px, 100%);
+  padding: 42px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 70px rgba(44, 32, 76, 0.11);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.back-link:hover {
+  color: var(--primary);
+}
+
+.portal-chip {
+  width: fit-content;
+  padding: 6px 10px;
+  display: block;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.login-heading h2 {
+  margin: 15px 0 8px;
+  font-size: 31px;
+}
+
+.login-heading p {
+  margin: 0 0 28px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.login-message {
+  margin-bottom: 18px;
+  padding: 13px 14px;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.login-message.error {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.login-message.success {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.field-group {
+  margin-bottom: 18px;
+  display: block;
+}
+
+.field-group > span {
+  margin-bottom: 8px;
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.field-group input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  color: var(--ink);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  transition: 0.16s;
+}
+
+.field-group input:focus {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px rgba(109,76,190,0.13);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 67px;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  height: 34px;
+  padding: 0 10px;
+  transform: translateY(-50%);
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.remember-row {
+  margin: 0 0 22px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.remember-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.login-button {
+  width: 100%;
+  height: 49px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  color: #ffffff;
+  background: var(--primary);
+  border: 0;
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.login-button:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.login-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.spinner {
+  width: 17px;
+  height: 17px;
+  border:
+    2px solid rgba(255,255,255,0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.security-note {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.security-note strong {
+  font-size: 12px;
+}
+
+.security-note p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    min-height: auto;
+    padding: 42px 30px;
+  }
+
+  .brand-content h1 {
+    font-size: 38px;
+  }
+
+  .feature-list {
+    display: none;
+  }
+
+  .form-panel {
+    padding: 30px 18px 48px;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-card {
+    padding: 28px 22px;
+    border-radius: 18px;
+  }
+
+  .brand-panel {
+    padding: 34px 22px;
+  }
+
+  .brand-mark {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 20px;
+    font-size: 23px;
+  }
+
+  .brand-content h1 {
+    font-size: 31px;
+  }
+
+  .brand-description {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+}

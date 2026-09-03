@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Aspect TOEIC 老師後台</title>
+
+  <link
+    rel="icon"
+    href="favicon.svg"
+    type="image/svg+xml"
+  >
+
+  <link
+    rel="stylesheet"
+    href="teacher.css?v=5.3.9"
+  >
+</head>
+
+<body class="auth-checking">
+
+  <div
+    id="authLoadingScreen"
+    class="auth-loading-screen"
+  >
+    <div class="auth-loading-card">
+      <div class="auth-loading-mark">A</div>
+      <strong>正在驗證老師權限</strong>
+      <span>請稍候……</span>
+    </div>
+  </div>
+
+  <div
+    id="teacherApp"
+    class="teacher-layout"
+  >
+
+    <aside class="teacher-sidebar">
+
+      <div class="teacher-brand">
+        <div class="teacher-logo">A</div>
+
+        <div>
+          <strong>Aspect English</strong>
+          <span>Teacher Portal</span>
+        </div>
+      </div>
+
+      <nav class="teacher-nav">
+
+        <button
+          class="nav-item active"
+          data-section="dashboard"
+          type="button"
+        >
+          <span>⌂</span>
+          Dashboard
+        </button>
+
+        <button
+          class="nav-item"
+          data-section="questions"
+          type="button"
+        >
+          <span>▤</span>
+          題庫管理
+        </button>
+
+        <button
+          class="nav-item"
+          data-section="directions"
+          type="button"
+        >
+          <span>▶</span>
+          口說 Directions
+        </button>
+
+        <button
+          class="nav-item"
+          data-section="tests"
+          type="button"
+        >
+          <span>☷</span>
+          測驗管理
+        </button>
+
+        <button
+          class="nav-item"
+          data-section="students"
+          type="button"
+        >
+          <span>♙</span>
+          學生紀錄
+        </button>
+
+        <button
+          class="nav-item"
+          data-section="results"
+          type="button"
+          disabled
+          title="後續版本開放"
+        >
+          <span>◫</span>
+          錄音與成績
+        </button>
+
+      </nav>
+
+      <div class="sidebar-footer">
+
+        <div class="signed-in-user">
+
+          <div
+            id="userAvatar"
+            class="user-avatar"
+          >
+            A
+          </div>
+
+          <div class="user-summary">
+
+            <strong id="userDisplayName">
+              —
+            </strong>
+
+            <span id="userRoleLabel">
+              正在驗證
+            </span>
+
+          </div>
+
+        </div>
+
+        <div class="version-chip">V5.0.9</div>
+
+        <a
+          class="student-link"
+          href="index.html"
+        >
+          開啟學生端
+        </a>
+
+        <button
+          id="logoutButton"
+          class="logout-button"
+          type="button"
+        >
+          登出老師後台
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="teacher-main">
+
+      <header class="teacher-topbar">
+
+        <div>
+
+          <p class="eyebrow">
+            TOEIC SPEAKING & WRITING
+          </p>
+
+          <h1 id="pageTitle">
+            Dashboard
+          </h1>
+
+        </div>
+
+        <div class="topbar-actions">
+
+          <span
+            id="topbarUserEmail"
+            class="topbar-user-email"
+          >
+            —
+          </span>
+
+          <span
+            id="databaseStatus"
+            class="connection-pill loading"
+          >
+            正在連線
+          </span>
+
+          <button
+            id="refreshButton"
+            class="icon-button"
+            type="button"
+            title="重新整理"
+          >
+            ↻
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <section
+        id="dashboardSection"
+        class="portal-section active"
+      >
+
+        <div class="dashboard-hero">
+
+          <div>
+            <span class="portal-chip">
+              MANAGEMENT CENTER
+            </span>
+
+            <h2>
+              今日測驗概況
+            </h2>
+
+            <p>
+              快速掌握今天的測驗、完成狀況與老師評分進度。
+            </p>
+          </div>
+
+          <div class="dashboard-hero-actions">
+            <button
+              class="secondary-action"
+              data-open-section="students"
+              type="button"
+            >
+              查看學生紀錄
+            </button>
+
+            <button
+              class="primary-action"
+              data-open-section="tests"
+              type="button"
+            >
+              管理測驗
+            </button>
+          </div>
+
+        </div>
+
+
+        <div class="metric-grid dashboard-metrics">
+
+          <article class="metric-card">
+            <span class="metric-label">
+              今日測驗
+            </span>
+
+            <strong
+              id="todaySessionCount"
+              class="metric-value"
+            >
+              —
+            </strong>
+
+            <span class="metric-note">
+              test_sessions
+            </span>
+          </article>
+
+
+          <article class="metric-card">
+            <span class="metric-label">
+              已完成
+            </span>
+
+            <strong
+              id="todayCompletedCount"
+              class="metric-value"
+            >
+              —
+            </strong>
+
+            <span class="metric-note">
+              completed
+            </span>
+          </article>
+
+
+          <article class="metric-card warning">
+            <span class="metric-label">
+              待評分
+            </span>
+
+            <strong
+              id="pendingReviewCount"
+              class="metric-value"
+            >
+              —
+            </strong>
+
+            <span class="metric-note">
+              需要老師處理
+            </span>
+          </article>
+
+
+          <article class="metric-card accent">
+            <span class="metric-label">
+              今日平均
+            </span>
+
+            <strong
+              id="todayAverageScore"
+              class="metric-value"
+            >
+              —
+            </strong>
+
+            <span class="metric-note">
+              老師 Overall / 5
+            </span>
+          </article>
+
+        </div>
+
+
+        <div class="dashboard-grid dashboard-main-grid">
+
+          <article class="panel-card">
+
+            <div class="panel-heading">
+              <div>
+                <h2>最近測驗</h2>
+                <p>今日最新建立的學生測驗紀錄。</p>
+              </div>
+
+              <button
+                class="text-button"
+                data-open-section="students"
+                type="button"
+              >
+                查看全部
+              </button>
+            </div>
+
+            <div
+              id="dashboardRecentSessions"
+              class="dashboard-session-list"
+            >
+              <div class="empty-state">
+                正在讀取今日測驗……
+              </div>
+            </div>
+
+          </article>
+
+
+          <article class="panel-card">
+
+            <div class="panel-heading">
+              <div>
+                <h2>快速入口</h2>
+                <p>常用後台功能。</p>
+              </div>
+            </div>
+
+            <div class="quick-action-grid">
+
+              <button
+                class="quick-action-card"
+                data-open-section="questions"
+                type="button"
+              >
+                <strong>題庫管理</strong>
+                <span>新增、編輯題目與時間</span>
+              </button>
+
+              <button
+                class="quick-action-card"
+                data-open-section="tests"
+                type="button"
+              >
+                <strong>測驗管理</strong>
+                <span>組卷、預覽與發布</span>
+              </button>
+
+              <button
+                class="quick-action-card"
+                data-open-section="students"
+                type="button"
+              >
+                <strong>學生紀錄</strong>
+                <span>播放錄音與老師評分</span>
+              </button>
+
+              <a
+                class="quick-action-card"
+                href="index.html"
+              >
+                <strong>開啟學生端</strong>
+                <span>立即進行測驗</span>
+              </a>
+
+            </div>
+
+          </article>
+
+        </div>
+
+
+        <div class="dashboard-grid dashboard-secondary-grid">
+
+          <article class="panel-card">
+            <div class="panel-heading">
+              <div>
+                <h2>系統題庫</h2>
+                <p>目前後台資料狀態。</p>
+              </div>
+            </div>
+
+            <div class="mini-stat-grid">
+              <div>
+                <span>啟用題目</span>
+                <strong id="activeQuestionCount">—</strong>
+              </div>
+
+              <div>
+                <span>啟用測驗</span>
+                <strong id="activeTestCount">—</strong>
+              </div>
+
+              <div>
+                <span>組卷題數</span>
+                <strong id="mappingCount">—</strong>
+              </div>
+
+              <div>
+                <span>系統狀態</span>
+                <strong id="systemStatus">檢查中</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel-card">
+            <div class="panel-heading">
+              <div>
+                <h2>目前啟用測驗</h2>
+                <p>學生端會載入的測驗版本。</p>
+              </div>
+            </div>
+
+            <div
+              id="dashboardTestList"
+              class="simple-list"
+            >
+              <div class="empty-state">
+                正在讀取測驗……
+              </div>
+            </div>
+          </article>
+
+        </div>
+
+      </section>
+
+
+      <section
+        id="questionsSection"
+        class="portal-section"
+      >
+
+        <div class="section-toolbar">
+
+          <div class="search-box">
+            <span>⌕</span>
+
+            <input
+              id="questionSearch"
+              type="search"
+              placeholder="搜尋題目代碼、標題或題型"
+            >
+          </div>
+
+          <select
+            id="questionTypeFilter"
+            class="filter-select"
+          >
+            <option value="">所有題型</option>
+            <option value="read_aloud">
+              Read Aloud
+            </option>
+            <option value="describe_picture">
+              Describe Picture
+            </option>
+            <option value="respond_question">
+              Respond to Questions
+            </option>
+            <option value="respond_information">
+              Using Information
+            </option>
+            <option value="express_opinion">
+              Express an Opinion
+            </option>
+            <option value="write_sentence">
+              Write a Sentence Based on a Picture
+            </option>
+
+            <option value="respond_written_request">
+              Respond to a Written Request
+            </option>
+
+            <option value="opinion_essay">
+              Write an Opinion Essay
+            </option>
+          </select>
+
+          <button
+            id="newQuestionButton"
+            class="primary-action"
+            type="button"
+          >
+            ＋ 新增題目
+          </button>
+
+        </div>
+
+
+        <div class="table-card">
+
+          <div class="table-scroll">
+
+            <table class="data-table">
+
+              <thead>
+                <tr>
+                  <th>題目代碼</th>
+                  <th>題型</th>
+                  <th>標題／內容</th>
+                  <th>準備</th>
+                  <th>回答</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+
+              <tbody id="questionTableBody">
+
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state">
+                      正在讀取題庫……
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section
+        id="directionsSection"
+        class="portal-section"
+      >
+        <div class="section-toolbar">
+          <div>
+            <h2 class="section-title">
+              口說 Directions
+            </h2>
+            <p class="section-description">
+              管理 Speaking Part 1–5 的共用說明文字與音檔。
+            </p>
+          </div>
+
+          <button
+            id="refreshDirectionsButton"
+            class="secondary-action"
+            type="button"
+          >
+            重新整理
+          </button>
+        </div>
+
+        <div
+          id="speakingDirectionsStatus"
+          class="empty-state"
+        >
+          正在載入口說 Directions……
+        </div>
+
+        <div
+          id="speakingDirectionsGrid"
+          class="test-card-grid"
+        ></div>
+      </section>
+
+
+      <section
+        id="testsSection"
+        class="portal-section"
+      >
+
+        <div class="section-toolbar">
+
+          <div>
+            <h2 class="section-title">
+              測驗管理
+            </h2>
+
+            <p class="section-description">
+              查看目前測驗版本及組卷題數。
+            </p>
+          </div>
+
+          <button
+            id="newTestButton"
+            class="primary-action"
+            type="button"
+          >
+            ＋ 建立測驗
+          </button>
+
+        </div>
+
+
+        <div
+          id="testCardGrid"
+          class="test-card-grid"
+        >
+          <div class="empty-state panel-card">
+            正在讀取測驗……
+          </div>
+        </div>
+
+      </section>
+
+      <section
+        id="studentsSection"
+        class="portal-section"
+      >
+
+        <div class="records-toolbar">
+
+          <div class="records-search">
+            <span>⌕</span>
+
+            <input
+              id="studentRecordSearch"
+              type="search"
+              placeholder="搜尋學生姓名、測驗編號或測驗類型"
+            >
+          </div>
+
+          <select
+            id="studentRecordStatusFilter"
+            class="filter-select"
+          >
+            <option value="">所有狀態</option>
+            <option value="completed">已完成</option>
+            <option value="in_progress">測驗中</option>
+            <option value="not_started">尚未作答</option>
+          </select>
+
+          <input
+            id="studentRecordDateFilter"
+            class="records-date-filter"
+            type="date"
+            aria-label="依測驗日期篩選"
+          >
+
+          <button
+            id="refreshStudentRecordsButton"
+            class="secondary-action"
+            type="button"
+          >
+            重新整理
+          </button>
+
+        </div>
+
+
+        <div class="records-summary-grid">
+
+          <article class="records-summary-card">
+            <span>測驗紀錄</span>
+            <strong id="studentRecordTotal">—</strong>
+          </article>
+
+          <article class="records-summary-card">
+            <span>已完成</span>
+            <strong id="studentRecordCompleted">—</strong>
+          </article>
+
+          <article class="records-summary-card">
+            <span>測驗中</span>
+            <strong id="studentRecordInProgress">—</strong>
+          </article>
+
+          <article class="records-summary-card">
+            <span>錄音作答</span>
+            <strong id="studentResponseTotal">—</strong>
+          </article>
+
+        </div>
+
+
+        <div class="table-card">
+
+          <div class="table-scroll">
+
+            <table class="data-table records-table">
+
+              <thead>
+                <tr>
+                  <th>學生姓名</th>
+                  <th>測驗</th>
+                  <th>開始時間</th>
+                  <th>完成進度</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+
+              <tbody id="studentRecordsTableBody">
+                <tr>
+                  <td colspan="6">
+                    <div class="empty-state">
+                      點選左側「學生紀錄」後載入資料。
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+    </main>
+
+  </div>
+
+
+
+
+  <div
+    id="studentRecordDetailBackdrop"
+    class="record-detail-backdrop hidden"
+  >
+
+    <section
+      class="record-detail-shell"
+      aria-labelledby="recordDetailHeading"
+    >
+
+      <header class="record-detail-header">
+
+        <div>
+          <span class="portal-chip">
+            STUDENT RECORD
+          </span>
+
+          <h2 id="recordDetailHeading">
+            學生測驗紀錄
+          </h2>
+
+          <p id="recordDetailSubtitle">
+            查看各題錄音與作答資料。
+          </p>
+        </div>
+
+        <div class="record-detail-header-actions">
+          <button id="exportStudentReportButton" class="report-export-button" type="button" disabled>
+            匯出 PDF
+          </button>
+          <button id="closeStudentRecordDetailButton" class="editor-close-button" type="button" aria-label="關閉學生紀錄">
+            ×
+          </button>
+        </div>
+
+      </header>
+
+
+      <div class="record-detail-meta">
+
+        <div>
+          <span>學生</span>
+          <strong id="recordDetailStudentName">—</strong>
+        </div>
+
+        <div>
+          <span>測驗類型</span>
+          <strong id="recordDetailTestType">—</strong>
+        </div>
+
+        <div>
+          <span>測驗編號</span>
+          <strong id="recordDetailTestId">—</strong>
+        </div>
+
+        <div>
+          <span>開始時間</span>
+          <strong id="recordDetailStartedAt">—</strong>
+        </div>
+
+        <div>
+          <span>完成進度</span>
+          <strong id="recordDetailProgress">—</strong>
+        </div>
+
+      </div>
+
+
+      <div
+        id="recordDetailResponseList"
+        class="record-response-list"
+      >
+        <div class="empty-state">
+          正在載入作答紀錄……
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div id="questionEditorBackdrop" class="editor-backdrop hidden">
+    <section class="question-editor-shell">
+      <header class="editor-header">
+        <div><span class="portal-chip">Question Editor</span><h2 id="questionEditorHeading">新增題目</h2><p>建立、編輯並即時預覽學生畫面。</p></div>
+        <button id="qeClose" class="editor-close-button" type="button">×</button>
+      </header>
+      <div class="editor-body">
+        <form id="questionEditorForm" class="editor-form">
+          <input id="qeId" type="hidden">
+          <div class="form-grid two-column">
+            <label class="editor-field"><span>題目代碼 *</span><input id="qeCode" required placeholder="SPK-P2-Q03"></label>
+            <label class="editor-field"><span>狀態 *</span><select id="qeStatus"><option value="draft">Draft｜草稿</option><option value="active">Active｜啟用</option><option value="inactive">Inactive｜停用</option></select></label>
+          </div>
+          <div class="form-grid two-column">
+            <label class="editor-field"><span>Section *</span><select id="qeSection"><option value="speaking">Speaking</option><option value="writing">Writing</option></select></label>
+            <label class="editor-field"><span>題型 *</span><select id="qeType">
+              <option value="read_aloud">Read Aloud</option>
+              <option value="describe_picture">Describe Picture</option>
+  <option value="respond_question">Respond to Questions</option>
+  <option value="respond_information">Using Information</option>
+  <option value="express_opinion">Express an Opinion</option>
+
+  <option value="write_sentence">Write a Sentence Based on a Picture</option>
+  <option value="respond_written_request">Respond to a Written Request</option>
+  <option value="opinion_essay">Write an Opinion Essay</option>
+</select></label>
+          </div>
+          <label class="editor-field"><span>標題</span><input id="qeTitle" placeholder="老師後台辨識用標題"></label>
+          <label class="editor-field"><span>Directions</span><textarea id="qeDirections" rows="3"></textarea></label>
+          <label class="editor-field"><span>Passage</span><textarea id="qePassage" rows="5"></textarea></label>
+          <label class="editor-field"><span>Prompt</span><textarea id="qePrompt" rows="4"></textarea></label>
+          <section id="qePart3BatchPanel" class="part3-batch-panel hidden">
+            <div class="part3-batch-heading">
+              <div>
+                <strong>Part 3 題組快速新增</strong>
+                <span>一次建立 Q5、Q6、Q7；三題共用 Passage，作答時依序解鎖。</span>
+              </div>
+              <button id="qePart3BatchToggle" class="secondary-action" type="button">切換為單題模式</button>
+            </div>
+
+            <div class="form-grid two-column">
+              <label class="editor-field">
+                <span>題組代碼 *</span>
+                <input id="qePart3GroupCode" placeholder="例如 GYM01">
+              </label>
+              <label class="editor-field">
+                <span>題組標題</span>
+                <input id="qePart3GroupTitle" placeholder="例如 Gym Interview">
+              </label>
+            </div>
+
+            <label class="editor-field">
+              <span>Q5–Q7 共用 Situation / Passage *</span>
+              <textarea id="qePart3Passage" rows="4" placeholder="Imagine that an American marketing company..."></textarea>
+            </label>
+            <div class="form-grid two-column">
+              <label class="editor-field">
+                <span>題組說明頁顯示時間（秒）</span>
+                <input id="qePart3IntroSeconds" type="number" min="1" value="10">
+              </label>
+              <div class="editor-field">
+                <span>學生端流程</span>
+                <div class="field-hint">Direction → 題組說明頁 → Q5 → Q6 → Q7</div>
+              </div>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 5</strong>
+              <label class="editor-field"><span>Question *</span><textarea id="qePart3Q5" rows="2"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q5Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q5Response" type="number" min="0" value="15"></label>
+              </div>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 6</strong>
+              <label class="editor-field"><span>Question *</span><textarea id="qePart3Q6" rows="2"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q6Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q6Response" type="number" min="0" value="15"></label>
+              </div>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 7</strong>
+              <label class="editor-field"><span>Question *</span><textarea id="qePart3Q7" rows="2"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q7Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q7Response" type="number" min="0" value="30"></label>
+              </div>
+            </div>
+
+            <div class="part3-batch-actions">
+              <button id="qePart3BatchSave" class="primary-action" type="button">一次建立 Q5–Q7</button>
+              <small>建立後可回到題庫逐題編輯並上傳 Q5／Q6／Q7 音檔，再到「測驗組卷」加入測驗。</small>
+            </div>
+          </section>
+
+          <section id="qePart4BatchPanel" class="part3-batch-panel hidden">
+            <div class="part3-batch-heading">
+              <div>
+                <strong>Part 4 題組快速新增</strong>
+                <span>一次建立 Q8、Q9、Q10；三題共用 Information 圖片，依序作答。</span>
+              </div>
+              <button id="qePart4BatchToggle" class="secondary-action" type="button">切換為單題模式</button>
+            </div>
+
+            <div class="form-grid two-column">
+              <label class="editor-field">
+                <span>題組代碼 *</span>
+                <input id="qePart4GroupCode" placeholder="例如 TOUR01">
+              </label>
+              <label class="editor-field">
+                <span>題組標題</span>
+                <input id="qePart4GroupTitle" placeholder="例如 Company Tour">
+              </label>
+            </div>
+
+            <label class="editor-field">
+              <span>共用 Information 文字（選填）</span>
+              <textarea id="qePart4InformationText" rows="4" placeholder="若資訊已全部做在圖片中，可留白。"></textarea>
+            </label>
+
+            <div class="form-grid two-column">
+              <label class="editor-field">
+                <span>Information 閱讀時間（秒）</span>
+                <input id="qePart4InfoSeconds" type="number" min="1" value="45">
+              </label>
+              <div class="editor-field">
+                <span>學生端流程</span>
+                <div class="field-hint">Direction → Information 45s → Q8 → Q9 → Q10</div>
+              </div>
+            </div>
+
+            <div class="asset-box part4-shared-asset-box">
+              <strong>Q8–Q10 共用 Information 圖片 *</strong>
+              <small>JPG、PNG、WEBP｜20 MB 內</small>
+              <input id="qePart4Image" type="file" accept="image/jpeg,image/png,image/webp">
+              <label class="asset-select-button" for="qePart4Image">選擇圖片</label>
+              <button id="qePart4ImageClear" class="asset-clear-button hidden" type="button">取消／移除圖片</button>
+              <div id="qePart4ImageResult" class="upload-result">尚未選擇圖片</div>
+              <img id="qePart4ImagePreview" class="part4-shared-image-preview hidden" alt="Information 圖片預覽">
+            </div>
+
+            <div class="asset-box part4-shared-asset-box">
+              <strong>Q8–Q10 共用 Information 音檔（選填）</strong>
+              <small>MP3、WAV、OGG、M4A｜20 MB 內｜Information 頁只播放 1 次</small>
+              <input id="qePart4InformationAudio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.m4a">
+              <label class="asset-select-button" for="qePart4InformationAudio">選擇音檔</label>
+              <div class="part4-shared-asset-actions">
+                <button id="qePart4AudioPreviewButton" class="secondary-action hidden" type="button">▶ 試播音檔</button>
+                <button id="qePart4AudioClear" class="asset-clear-button hidden" type="button">取消／移除音檔</button>
+              </div>
+              <div id="qePart4InformationAudioResult" class="upload-result">尚未選擇音檔</div>
+              <audio id="qePart4AudioPreview" class="hidden" preload="metadata"></audio>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 8</strong>
+              <label class="editor-field"><span>Question（選填）</span><textarea id="qePart4Q8" rows="2" placeholder="正式測驗只有音檔時可留白"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart4Q8Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart4Q8Response" type="number" min="0" value="15"></label>
+              </div>
+              <label class="editor-field"><span>Question 8 音檔（選填）</span><input id="qePart4Q8Audio" type="file" accept="audio/*"></label>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 9</strong>
+              <label class="editor-field"><span>Question（選填）</span><textarea id="qePart4Q9" rows="2" placeholder="正式測驗只有音檔時可留白"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart4Q9Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart4Q9Response" type="number" min="0" value="15"></label>
+              </div>
+              <label class="editor-field"><span>Question 9 音檔（選填）</span><input id="qePart4Q9Audio" type="file" accept="audio/*"></label>
+            </div>
+
+            <div class="part3-question-card">
+              <strong>Question 10</strong>
+              <label class="editor-field"><span>Question（選填）</span><textarea id="qePart4Q10" rows="2" placeholder="正式測驗只有音檔時可留白"></textarea></label>
+              <div class="form-grid two-column">
+                <label class="editor-field"><span>Preparation（秒）</span><input id="qePart4Q10Prep" type="number" min="0" value="3"></label>
+                <label class="editor-field"><span>Response（秒）</span><input id="qePart4Q10Response" type="number" min="0" value="30"></label>
+              </div>
+              <label class="editor-field"><span>Question 10 音檔（選填；學生端自動播放 2 次）</span><input id="qePart4Q10Audio" type="file" accept="audio/*"></label>
+            </div>
+
+            <div class="part3-batch-actions">
+              <button id="qePart4BatchSave" class="primary-action" type="button">儲存 Part 4 題組</button>
+              <small>Q10 在正式測驗排序為第 10 題時會自動播放題目音檔 2 次。</small>
+            </div>
+          </section>
+
+         <div
+          id="qeIndividualTimingRow"
+          class="form-grid two-column qe-generic-timing-row"
+>
+  <label class="editor-field">
+    <span>準備時間（秒）</span>
+    <input
+      id="qePrep"
+      type="number"
+      min="0"
+      max="600"
+      value="45"
+    >
+  </label>
+
+  <label class="editor-field">
+    <span>回答時間（秒）</span>
+    <input
+      id="qeResponse"
+      type="number"
+      min="0"
+      max="600"
+      value="45"
+    >
+  </label>
+</div>
+          <div
+          id="qeSharedTimingRow"
+          class="form-grid two-column hidden"
+        >
+          <label class="editor-field">
+            <span>共用計時群組</span>
+            <input
+              id="qeTimerGroup"
+              type="text"
+              placeholder="例如 writing_part_1"
+            >
+          </label>
+
+  <label class="editor-field">
+    <span>共用作答時間（分鐘）</span>
+    <input
+      id="qeSharedResponse"
+      type="number"
+      min="0"
+      value="0"
+    >
+  </label>
+</div>
+          <div class="asset-grid">
+            <div class="asset-box">
+              <strong>上傳圖片</strong>
+              <span>JPG、PNG、WEBP｜20 MB 內</span>
+              <input id="qeImage" type="file" accept="image/jpeg,image/png,image/webp">
+              <label class="asset-select-button" for="qeImage">選擇圖片</label>
+              <button id="qeClearImage" class="asset-clear-button hidden" type="button">取消／移除圖片</button>
+              <small id="qeImageResult" class="asset-result hidden"></small>
+            </div>
+            <div class="asset-box">
+              <strong>上傳音檔</strong>
+              <span>MP3、WAV、OGG、M4A｜20 MB 內</span>
+              <input id="qeAudio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4">
+              <label class="asset-select-button" for="qeAudio">選擇音檔</label>
+              <button id="qeTranscribeAudio" class="asset-clear-button" type="button">AI 轉逐字稿</button>
+              <small id="qeAudioResult" class="asset-result hidden"></small>
+              <small id="qeTranscriptResult" class="asset-result hidden"></small>
+            </div>
+          </div>
+          <input id="qeImageUrl" type="hidden"><input id="qeAudioUrl" type="hidden">
+          <div id="qeMessage" class="editor-message hidden"></div>
+          <footer class="editor-actions">
+            <button id="qeDelete" class="danger-action hidden" type="button">刪除題目</button>
+            <div><button id="qeCancel" class="secondary-action" type="button">取消</button><button id="qeSave" class="primary-action" type="submit">儲存題目</button></div>
+          </footer>
+        </form>
+        <aside class="question-preview-panel">
+          <div class="preview-heading"><div><span>STUDENT PREVIEW</span><strong id="qePreviewCode">NEW QUESTION</strong></div><span id="qePreviewStatus" class="status-badge draft">draft</span></div>
+          <div class="preview-screen">
+            <div class="preview-topbar"><span id="qePreviewType">Read Aloud</span><span id="qePreviewTime">Preparation 45s · Response 45s</span></div>
+            <div class="preview-content"><p id="qePreviewDirections" class="preview-directions">Directions will appear here.</p><h3 id="qePreviewTitle">題目標題</h3><img id="qePreviewImage" class="preview-image hidden" alt="題目圖片預覽"><div id="qePreviewPassage" class="preview-passage">Passage content will appear here.</div><p id="qePreviewPrompt" class="preview-prompt">Prompt will appear here.</p><audio id="qePreviewAudio" class="preview-audio hidden" controls></audio></div>
+            <div class="preview-footer"><span></span>Ready to record</div>
+          </div>
+          <p class="preview-note">即時預覽不會開始錄音或計時。</p>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+
+  <div id="testBuilderBackdrop" class="editor-backdrop hidden">
+    <section class="test-builder-shell">
+      <header class="editor-header">
+        <div><span class="portal-chip">TEST BUILDER</span><h2 id="tbHeading">建立測驗</h2><p>建立測驗、加入題目、設定順序並發布給學生。</p></div>
+        <button id="tbClose" class="editor-close-button" type="button">×</button>
+      </header>
+      <div class="test-builder-body">
+        <section class="test-builder-settings">
+          <input id="tbId" type="hidden">
+          <div
+            class="form-grid two-column"
+          >
+            <label class="editor-field"><span>測驗代碼 *</span><input id="tbCode" placeholder="TOEIC-SPEAKING-PLACEMENT-V1"></label>
+            <label class="editor-field"><span>版本</span><input id="tbVersion" type="number" min="1" value="1"></label>
+          </div>
+          <label class="editor-field">
+          <span>測驗類型 *</span>
+          <select id="tbTestType">
+          <option value="">請選擇測驗類型</option>
+          <option value="quick">口說寫作快速程度檢測</option>
+          <option value="speaking">多益口說完整模擬</option>
+          <option value="writing">多益寫作完整模擬</option>
+          <option value="full">多益口說寫作完整模擬</option>
+        </select>
+      </label>
+          <label class="editor-field"><span>測驗名稱 *</span><input id="tbName" placeholder="TOEIC Speaking Placement Test"></label>
+          <label class="editor-field"><span>測驗說明</span><textarea id="tbDescription" rows="2"></textarea></label>
+        </section>
+        <div class="builder-columns">
+          <section class="builder-column">
+            <div class="builder-column-heading builder-bank-heading">
+              <div><strong>題庫</strong><small>勾選後加入右側試卷</small></div>
+              <div class="builder-bank-tools">
+                <input id="tbSearch" type="search" placeholder="搜尋題目">
+                <select id="tbTypeFilter" aria-label="題型篩選">
+                  <option value="">所有題型</option>
+                  <option value="read_aloud">Read Aloud</option>
+                  <option value="describe_picture">Describe Picture</option>
+                  <option value="respond_question">Respond to Questions</option>
+                  <option value="respond_information">Using Information</option>
+                  <option value="express_opinion">Express an Opinion</option>
+                </select>
+              </div>
+            </div>
+            <div class="builder-select-toolbar">
+              <label><input id="tbSelectAll" type="checkbox"> 全選目前結果</label>
+              <span id="tbAvailableCount">0 題可加入</span>
+            </div>
+            <div id="tbBankList" class="builder-list"></div>
+            <button id="tbAddSelected" class="secondary-action builder-add-button" type="button">加入已勾選題目 →</button>
+          </section>
+          <section class="builder-column selected">
+            <div class="builder-column-heading"><div><strong>本次測驗</strong><small>使用上下按鈕調整順序</small></div><span id="tbQuestionCount" class="status-badge draft">0 題</span></div>
+            <div id="tbSelectedList" class="builder-list selected-list"></div>
+          </section>
+        </div>
+        <div id="tbMessage" class="editor-message hidden"></div>
+        <footer class="editor-actions">
+          <button id="tbCancel" class="secondary-action" type="button">關閉</button>
+          <div><button id="tbPreview" class="secondary-action" type="button">預覽試卷</button><button id="tbSave" class="secondary-action" type="button">儲存草稿</button><button id="tbPublish" class="primary-action" type="button">發布測驗</button></div>
+        </footer>
+      </div>
+    </section>
+  </div>
+
+
+
+  <div id="publishValidatorBackdrop" class="editor-backdrop hidden">
+    <section class="publish-validator-card" aria-labelledby="pvHeading">
+      <header class="publish-validator-header">
+        <div>
+          <span class="portal-chip">PUBLISH CHECK</span>
+          <h2 id="pvHeading">發布前檢查</h2>
+          <p id="pvSummary">正在檢查試卷設定……</p>
+        </div>
+        <button id="pvClose" class="editor-close-button" type="button" aria-label="關閉">×</button>
+      </header>
+
+      <div class="publish-validator-body">
+        <section>
+          <h3>必須修正</h3>
+          <div id="pvErrors" class="validator-list"></div>
+        </section>
+
+        <section>
+          <h3>提醒事項</h3>
+          <div id="pvWarnings" class="validator-list"></div>
+        </section>
+      </div>
+
+      <footer class="publish-validator-actions">
+        <button id="pvCancel" class="secondary-action" type="button">返回組卷</button>
+        <button id="pvConfirm" class="primary-action" type="button">確認發布</button>
+      </footer>
+    </section>
+  </div>
+
+  <div id="testPreviewBackdrop" class="editor-backdrop hidden">
+    <section class="test-preview-shell">
+      <header class="editor-header">
+        <div><span class="portal-chip">TEST PREVIEW</span><h2 id="tpHeading">試卷預覽</h2><p id="tpMeta">依照目前組卷順序顯示，不會錄音或計時。</p></div>
+        <button id="tpClose" class="editor-close-button" type="button">×</button>
+      </header>
+      <div class="test-preview-body">
+        <aside id="tpQuestionList" class="test-preview-list"></aside>
+        <main class="test-preview-stage">
+          <div class="preview-topbar"><span id="tpQuestionNumber">Question 1</span><span id="tpQuestionType">Read Aloud</span></div>
+          <div class="preview-content">
+            <p id="tpDirections" class="preview-directions"></p>
+            <h3 id="tpTitle"></h3>
+            <img id="tpImage" class="preview-image hidden" alt="題目圖片預覽">
+            <div id="tpPassage" class="preview-passage"></div>
+            <p id="tpPrompt" class="preview-prompt"></p>
+            <audio id="tpAudio" class="preview-audio hidden" controls></audio>
+          </div>
+          <div class="test-preview-footer"><button id="tpPrev" class="secondary-action" type="button">← 上一題</button><span id="tpTiming"></span><button id="tpNext" class="primary-action" type="button">下一題 →</button></div>
+        </main>
+      </div>
+    </section>
+  </div>
+
+
+  <div
+    id="speakingDirectionModal"
+    class="modal-backdrop hidden"
+  >
+    <div class="modal-card">
+      <button
+        id="sdCloseButton"
+        class="modal-close"
+        type="button"
+        aria-label="關閉"
+      >
+        ×
+      </button>
+
+      <div class="modal-icon">▶</div>
+
+      <h2 id="speakingDirectionModalTitle">
+        Speaking Direction
+      </h2>
+
+      <p>
+        此 Direction 會在該 Speaking Part 開始前播放一次。
+      </p>
+
+      <div class="editor-field">
+        <span>Part</span>
+        <input
+          id="sdPartNumber"
+          type="number"
+          min="1"
+          max="5"
+          readonly
+        >
+      </div>
+
+      <div class="editor-field">
+        <span>狀態</span>
+        <select id="sdStatus">
+          <option value="active">Active｜啟用</option>
+          <option value="draft">Draft｜草稿</option>
+          <option value="inactive">Inactive｜停用</option>
+        </select>
+      </div>
+
+      <div class="editor-field">
+        <span>標題</span>
+        <input
+          id="sdTitle"
+          type="text"
+          placeholder="例如 Speaking Part 1 Directions"
+        >
+      </div>
+
+      <div class="editor-field">
+        <span>Direction 文字</span>
+        <textarea
+          id="sdDirectionsText"
+          rows="7"
+          placeholder="輸入 Direction 文字"
+        ></textarea>
+      </div>
+
+      <div class="editor-field">
+        <span>Direction 音檔</span>
+        <input
+          id="sdAudioFile"
+          type="file"
+          accept="audio/*"
+        >
+      </div>
+
+      <div
+        id="sdAudioCurrent"
+        class="empty-state"
+      >
+        尚未設定音檔。
+      </div>
+
+      <audio
+        id="sdAudioPreview"
+        class="hidden"
+        controls
+      ></audio>
+
+      <div class="modal-actions">
+        <button
+          id="sdCancelButton"
+          class="secondary-action"
+          type="button"
+        >
+          取消
+        </button>
+
+        <button
+          id="sdSaveButton"
+          class="primary-action"
+          type="button"
+        >
+          儲存 Direction
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <div
+    id="comingSoonModal"
+    class="modal-backdrop hidden"
+  >
+
+    <div class="modal-card">
+
+      <button
+        id="closeModalButton"
+        class="modal-close"
+        type="button"
+        aria-label="關閉"
+      >
+        ×
+      </button>
+
+      <div class="modal-icon">✦</div>
+
+      <h2 id="modalTitle">
+        功能即將開放
+      </h2>
+
+      <p id="modalText">
+        下一階段會加入 Supabase Auth、題目新增與編輯功能。
+      </p>
+
+      <button
+        id="modalConfirmButton"
+        class="primary-action wide"
+        type="button"
+      >
+        我知道了
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="config.js"></script>
+  <script src="supabase-service.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="question-editor-service.js?v=5.4.7"></script>
+  <script src="speaking-directions-service.js?v=5.3.0"></script>
+  <script src="test-builder-service.js?v=5.4.7"></script>
+
+  <!-- Student Records must load before teacher.js -->
+  <script src="student-records-service.js?v=5.0.1"></script>
+  <script src="pdf-report-service.js?v=5.0.1"></script>
+  <script src="teacher-scoring-service.js?v=5.0.1"></script>
+  <script src="ai-scoring-service.js?v=5.0.1"></script>
+  <script src="student-records.js?v=5.0.1"></script>
+
+  <script src="dashboard-service.js?v=5.0.1"></script>
+  <script src="teacher.js?v=5.5.4"></script>
+  <script src="transcription-service.js?v=5.3.0"></script>
+<script src="question-editor.js?v=5.5.4"></script>
+  <script src="test-builder.js?v=5.0.4"></script>
+
+</body>
+</html>
