@@ -2470,6 +2470,17 @@ function createSpeakingAssessmentEngine(questions) {
         persistAssessmentResponse
     });
 
+  engine.addEventListener("assessmenterror", (event) => {
+    const { message, question, currentIndex } = event.detail;
+    const detail = `第 ${currentIndex + 1} 題 (${question?.code || "未知題號"})：${message}`;
+    console.error("口說測驗停止，請檢查 Console / Network：", detail);
+    assessmentStageText.textContent = "測驗暫停：儲存或切題失敗";
+    assessmentQuestionType.textContent = "請通知工作人員";
+    assessmentPromptText.textContent = detail + "。請勿關閉本頁，先截圖並通知工作人員。";
+    assessmentPromptText.classList.remove("hidden");
+    completedRecordingStatus.textContent = "測驗尚未完成：" + detail;
+  });
+
   engine.addEventListener(
     "questionchange",
     (event) => {
@@ -2542,6 +2553,10 @@ function createSpeakingAssessmentEngine(questions) {
           "Recording",
         UPLOADING:
           "Saving response",
+        STOPPING_RECORDING:
+          "Finishing recording",
+        ERROR:
+          "Test paused: save/transition error",
         NEXT_QUESTION:
           "Loading next question",
         FINISHED:

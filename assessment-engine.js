@@ -112,7 +112,25 @@ class AssessmentEngine extends EventTarget {
     this.isRunning = true;
     this.currentIndex = 0;
 
-    await this.runCurrentQuestion();
+    try {
+      await this.runCurrentQuestion();
+    } catch (error) {
+      this.clearTimer();
+      this.isRunning = false;
+      console.error("AssessmentEngine: question transition failed", {
+        question: this.currentQuestion?.code,
+        index: this.currentIndex,
+        state: this.state,
+        error
+      });
+      this.setState("ERROR", { errorMessage: error?.message || String(error) });
+      this.emit("assessmenterror", {
+        question: this.currentQuestion,
+        currentIndex: this.currentIndex,
+        phase: this.state,
+        message: error?.message || String(error)
+      });
+    }
   }
 
   async runCurrentQuestion() {
@@ -230,6 +248,8 @@ class AssessmentEngine extends EventTarget {
       question.responseSeconds
     );
 
+    this.setState("STOPPING_RECORDING");
+
     const recordingResult =
       await this.handlers.stopRecording(
         question,
@@ -240,10 +260,15 @@ class AssessmentEngine extends EventTarget {
 
     this.setState("UPLOADING");
 
-    await this.handlers.persistResponse(
-      question,
-      recordingResult
-    );
+    try {
+      await this.handlers.persistResponse(
+        question,
+        recordingResult
+      );
+    } catch (error) {
+      console.error("Failed to save response; not advancing to avoid data loss", question?.code, error);
+      throw new Error(`題目 ${question?.code || this.currentIndex + 1} 的錄音儲存失敗：${error?.message || String(error)}`);
+    }
 
     this.emit("responsesaved", {
       question,
