@@ -1,0 +1,17 @@
+Aspect TOEIC S&W GitHub Pages V7 修正版
+
+修正：新增遺失的三張題目圖片，修正 index.html 的網站根目錄 icon 路徑，更新 PWA 快取版本。
+
+上傳：將本 ZIP 解壓縮後，所有檔案（不是外層資料夾）上傳至 Aspect-English/assessment.com 的 main 根目錄。
+請確認 GitHub 上 question_bank/speaking/part2/quick_spk_p2_001.jpg、quick_spk_p2_002.jpg 以及 question_bank/writing/part1/quick_wrt_p1_001.jpg 確實存在。
+
+驗證圖片：
+https://aspect-english.github.io/assessment.com/question_bank/speaking/part2/quick_spk_p2_001.jpg
+https://aspect-english.github.io/assessment.com/question_bank/speaking/part2/quick_spk_p2_002.jpg
+https://aspect-english.github.io/assessment.com/question_bank/writing/part1/quick_wrt_p1_001.jpg
+
+注意：快速測驗的正式題目是從 Supabase 的 active tests + test_questions + active question_bank 讀取，並非自動從 quick-question-bank.json 顯示。題庫 JSON 目前含草稿題目，需在老師端匯入、啟用並將題目加入已發布的快速測驗。
+
+如其他電腦仍顯示舊版：在該網頁 F12 > Application > Service Workers > Unregister，並清除該站點快取，重新載入。清除站點資料可能移除本機未上傳作答，請先確認。
+
+GitHub 公開倉庫：本包排除 SQL、README、舊文件；公開前仍須確認 Supabase RLS、Storage policy 和老師權限，請勿上傳 service_role 或 sb_secret 金鑰。

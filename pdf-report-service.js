@@ -113,6 +113,27 @@ const PdfReportService = {
         </tr>`;
     }).join("");
 
+    const questionDetails = responses.map((response) => {
+      const question = qMap.get(response.question_id);
+      const image = String(question?.image_url || "").trim();
+      let imageHtml = "";
+      if (image && !/^(?:data:|javascript:|blob:|\/\/)/i.test(image)) {
+        const url = /^https:\/\//i.test(image)
+          ? image
+          : new URL(image.replace(/^\/+/, ""), new URL("./", window.location.href)).href;
+        imageHtml = `<img class="question-image" src="${this.e(url)}" alt="題目圖片"/>`;
+      }
+      const transcript = transcriptMap.get(response.id) || "";
+      return `<section class="question-detail">
+        <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
+        <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
+        ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
+        ${question?.passage && question?.prompt ? `<div>${this.e(question.passage)}</div>` : ""}
+        ${imageHtml}
+        <div class="answer"><strong>學生作答：</strong>${this.e(response.text_response || transcript || (response.recording_path ? "已提交錄音（尚無逐字稿）" : "未提供作答內容"))}</div>
+      </section>`;
+    }).join("");
+
     return `<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -143,6 +164,7 @@ td:first-child{width:22%}td:first-child strong,td:first-child span{display:block
 th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:last-child{width:22%;text-align:left}
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
+.question-detail{page-break-inside:avoid;break-inside:avoid;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
 @media print{.notice{display:none}}
 </style>
 </head>
@@ -183,6 +205,8 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 <thead><tr><th>題目</th><th>Pron.</th><th>Int.</th><th>Gram.</th><th>Vocab.</th><th>Content</th><th>Overall</th><th>老師評語</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
+<h2>題目與學生作答</h2>
+${questionDetails}
 <footer class="footer"><span>Aspect English - TOEIC SW Assessment Platform</span><span>本報告為老師評閱結果，非 ETS 官方成績單。</span></footer>
 <script>window.addEventListener("load",()=>setTimeout(()=>window.print(),300));</script>
 </body>
