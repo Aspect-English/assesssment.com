@@ -24,6 +24,23 @@ const StudentRecordsModule = (() => {
       .replaceAll("'", "&#039;");
   }
 
+
+  function questionImageUrl(question) {
+    const raw = String(question?.image_url || "").trim();
+    if (!raw) return "";
+    if (/^https:\/\//i.test(raw)) return raw;
+    if (/^(?:data:|javascript:|blob:|\/\/)/i.test(raw)) return "";
+    const relative = raw.replace(/^\/+/, "");
+    const base = new URL("./", window.location.href);
+    return new URL(relative, base).href;
+  }
+
+  function imageMarkup(question) {
+    const url = questionImageUrl(question);
+    if (!url) return "";
+    return `<div class="record-question-image-wrap"><strong>題目圖片</strong><img class="record-question-image" src="${escapeHtml(url)}" alt="該題原始題目圖片" loading="lazy" onerror="this.closest('.record-question-image-wrap').classList.add('image-unavailable')"/><span class="record-image-error">題目圖片無法載入，請確認題庫圖片網址。</span></div>`;
+  }
+
   function formatDateTime(value) {
     if (!value) {
       return "—";
@@ -531,6 +548,8 @@ const StudentRecordsModule = (() => {
     if ($("recordDetailOverall")) $("recordDetailOverall").textContent = "—";
     if ($("recordDetailToeicScore")) $("recordDetailToeicScore").textContent = "— / 200";
 
+    const deleteButton = $("deleteStudentRecordButton");
+    if (deleteButton) deleteButton.classList.toggle("hidden", portalState?.auth?.profile?.role !== "admin");
     const exportButton =
       $("exportStudentReportButton");
 
@@ -710,6 +729,8 @@ const StudentRecordsModule = (() => {
 
                 </div>
 
+                ${imageMarkup(question)}
+                ${response.text_response ? `<div class="record-written-answer"><strong>學生作答</strong><p>${escapeHtml(response.text_response)}</p></div>` : ""}
                 <div class="record-response-meta">
                   <span>
                     錄音：
@@ -1110,6 +1131,21 @@ const StudentRecordsModule = (() => {
         "click",
         () => load(true)
       );
+
+    $("deleteStudentRecordButton")?.addEventListener("click", async () => {
+      const sessionId = state.currentReportData?.session?.id;
+      if (!sessionId || portalState?.auth?.profile?.role !== "admin") return;
+      if (!window.confirm("確定將這筆學生測驗紀錄移至封存？封存後將不再顯示於學生紀錄列表，原始資料不會刪除。")) return;
+      const button = $("deleteStudentRecordButton");
+      button.disabled = true;
+      try {
+        await StudentRecordsService.archiveSession(sessionId);
+        closeDetail();
+        await load(true);
+      } catch (error) {
+        window.alert("封存失敗：" + (error.message || "請確認已執行附帶的 Supabase SQL 權限設定"));
+      } finally { button.disabled = false; }
+    });
 
     $("exportStudentReportButton")
       .addEventListener(

@@ -1,6 +1,11 @@
 "use strict";
 
 const StudentRecordsService = {
+  async archiveSession(sessionId) {
+    const { error } = await supabaseClient.rpc("archive_student_session", { p_session_id: sessionId });
+    if (error) throw error;
+  },
+
   async getSessions() {
     const { data, error } =
       await supabaseClient
@@ -20,6 +25,7 @@ const StudentRecordsService = {
             "updated_at"
           ].join(",")
         )
+        .is("archived_at", null)
         .order("started_at", {
           ascending: false
         })
@@ -135,7 +141,9 @@ const StudentRecordsService = {
             "question_type",
             "title",
             "prompt",
-            "passage"
+            "passage",
+            "image_url",
+            "directions"
           ].join(",")
         )
         .in("id", ids);

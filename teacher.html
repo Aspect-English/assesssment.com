@@ -17,7 +17,7 @@
 
   <link
     rel="stylesheet"
-    href="teacher.css?v=5.3.9"
+    href="teacher.css?v=7.3.0"
   >
 </head>
 
@@ -782,6 +782,7 @@
         </div>
 
         <div class="record-detail-header-actions">
+          <button id="deleteStudentRecordButton" class="report-export-button hidden" type="button" style="background:#fff;color:#b42332;border:1px solid #d8a0a5">刪除紀錄</button>
           <button id="exportStudentReportButton" class="report-export-button" type="button" disabled>
             匯出 PDF
           </button>
@@ -1441,11 +1442,11 @@
   <script src="test-builder-service.js?v=5.4.7"></script>
 
   <!-- Student Records must load before teacher.js -->
-  <script src="student-records-service.js?v=5.0.1"></script>
-  <script src="pdf-report-service.js?v=5.6.0"></script>
+  <script src="student-records-service.js?v=7.3.0"></script>
+  <script src="pdf-report-service.js?v=7.3.0"></script>
   <script src="teacher-scoring-service.js?v=5.6.0"></script>
   <script src="ai-scoring-service.js?v=5.0.1"></script>
-  <script src="student-records.js?v=5.6.0"></script>
+  <script src="student-records.js?v=7.3.0"></script>
 
   <script src="dashboard-service.js?v=5.0.1"></script>
   <script src="teacher.js?v=5.0.7-part3-group-edit"></script>

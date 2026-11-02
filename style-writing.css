@@ -207,3 +207,21 @@
 
 /* V5.5.8 Writing start + Part Directions interstitials */
 .writing-interstitial-shell{min-height:100vh;padding:28px;background:#f4f2fb;display:flex;align-items:flex-start;justify-content:center}.writing-interstitial-window{width:min(1180px,100%);margin:0 auto;background:#f7f1dc;border:1px solid #ddd8ee;border-radius:18px;overflow:hidden;box-shadow:0 12px 34px rgba(38,29,69,.08)}.writing-interstitial-header{min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;background:linear-gradient(90deg,#302451,#51358d 52%,#7049c7);color:#fff;font-size:21px}.writing-interstitial-content{padding:58px 70px 64px;font-size:19px;line-height:1.65}.writing-interstitial-content h1{text-align:center;margin:0 0 34px;font-size:30px;color:#221a38}.writing-start-summary{max-width:780px;margin:30px auto;padding:20px 26px;background:rgba(255,255,255,.52);border:1px solid rgba(67,52,104,.18);border-radius:12px}.writing-start-summary p{margin:9px 0}.writing-interstitial-note{margin-top:34px}.writing-interstitial-button,.writing-header-continue{border:0;border-radius:8px;background:#245cc7;color:#fff;font-weight:700;cursor:pointer}.writing-interstitial-button{display:block;min-width:150px;margin:34px 0 0 auto;padding:13px 24px;font-size:16px}.writing-header-continue{padding:8px 14px;font-size:13px}.writing-directions-screen-text{white-space:pre-wrap;max-width:980px;margin:0 auto;font-size:20px;line-height:1.7}.writing-directions-screen .writing-interstitial-note{max-width:980px;margin-left:auto;margin-right:auto}@media(max-width:900px){.writing-interstitial-shell{padding:0}.writing-interstitial-window{min-height:100vh;border-radius:0}.writing-interstitial-content{padding:36px 24px}.writing-directions-screen-text{font-size:17px}}
+
+/* V7.3: keep the writing exam controls visible at different desktop heights. */
+@media (min-width: 901px) {
+  .writing-test-shell { height: 100dvh; min-height: 0; padding: clamp(6px, 1.4vh, 18px); overflow: hidden; }
+  .writing-test-window { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .writing-test-header { flex: 0 0 auto; min-height: clamp(52px, 8vh, 72px); }
+  .writing-test-body { flex: 1 1 auto; min-height: 0; height: auto; overflow: hidden; }
+  .writing-question-panel { min-height: 0; overflow-y: auto; padding: clamp(10px, 2vh, 28px) 24px; }
+  .writing-question-image { max-height: min(32dvh, 420px); }
+  .writing-answer-panel { min-height: 0; overflow: hidden; }
+  .writing-toolbar { flex: 0 0 auto; min-height: 48px; padding: 6px 12px; }
+  .writing-answer { flex: 1 1 auto; min-height: 0; height: 0; overflow-y: auto; padding: 16px; }
+  .writing-navigation { flex: 0 0 auto; padding: 8px 14px; }
+}
+@media (max-width: 900px) {
+  .writing-test-shell { min-height: 100dvh; }
+  .writing-answer { min-height: clamp(220px, 40dvh, 620px); }
+}

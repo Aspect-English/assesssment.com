@@ -1,0 +1,4 @@
+V7.3 changes: writing viewport fit and spellcheck off; teacher record question images and written answers; PDF question details and answers; admin-only soft archive button.
+IMPORTANT: Run SUPABASE_ARCHIVE_STUDENT_RECORDS.sql in Supabase SQL Editor BEFORE using teacher student records. Otherwise sessions query will fail due to missing archived_at column.
+Backup GitHub and database before deployment. Existing recordings and test responses are not deleted by archive.
+Browser/PWA cache changed. Validate on another screen and check the report in print preview.
