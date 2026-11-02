@@ -268,17 +268,32 @@ function qeOpen(question = null) {
 // 但 question-editor.js 原本沒有輸出此 API，因而誤顯示「Part 4 題組 / 我知道了」。
 window.QuestionEditor = window.QuestionEditor || {};
 window.QuestionEditor.open = function(question = null) {
-  qeOpen(question);
-
-  // Part 4 題目進入編輯器時保持題組模式。
-  if (
-    question?.section_type === "speaking" &&
-    question?.question_type === "respond_information"
-  ) {
-    window.setTimeout(() => {
-      window.syncPart4BatchPanel?.();
-    }, 0);
+  if (!question) {
+    qeOpen();
+    return;
   }
+
+  // Part 3 / Part 4 以題組方式編輯舊題；
+  // Part 1 / Part 2 / Part 5 與 Writing 直接開啟單題編輯器。
+  if (
+    question.section_type === "speaking" &&
+    question.question_type === "respond_question" &&
+    typeof window.openPart3GroupEditor === "function"
+  ) {
+    window.openPart3GroupEditor(question);
+    return;
+  }
+
+  if (
+    question.section_type === "speaking" &&
+    question.question_type === "respond_information" &&
+    typeof window.openPart4GroupEditor === "function"
+  ) {
+    window.openPart4GroupEditor(question);
+    return;
+  }
+
+  qeOpen(question);
 };
 
 function qeClose() {
@@ -581,7 +596,7 @@ window.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
     event.stopImmediatePropagation();
     const question = portalState.questions.find(item => item.id === button.dataset.editQuestion);
-    if (question) qeOpen(question);
+    if (question) QuestionEditor.open(question);
   }, true);
 });
 
@@ -593,6 +608,48 @@ window.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("qePart3BatchPanel");
   const batchSave = document.getElementById("qePart3BatchSave");
   const batchToggle = document.getElementById("qePart3BatchToggle");
+  const situationAudioInput = document.getElementById("qePart3SituationAudio");
+  const situationAudioResult = document.getElementById("qePart3SituationAudioResult");
+  const situationAudioPreview = document.getElementById("qePart3AudioPreview");
+  const situationAudioPreviewButton = document.getElementById("qePart3AudioPreviewButton");
+  const situationAudioClear = document.getElementById("qePart3AudioClear");
+  let existingPart3SituationAudioUrl = "";
+  const existingPart3QuestionAudioUrls = { 5: "", 6: "", 7: "" };
+
+  situationAudioInput?.addEventListener("change", () => {
+    const file = situationAudioInput.files?.[0];
+    if (!file) return;
+    situationAudioPreview.src = URL.createObjectURL(file);
+    situationAudioResult.textContent = `已選擇：${file.name}`;
+    situationAudioPreviewButton?.classList.remove("hidden");
+    situationAudioClear?.classList.remove("hidden");
+  });
+
+  situationAudioPreviewButton?.addEventListener("click", () => {
+    if (!situationAudioPreview?.src) return;
+    situationAudioPreview.currentTime = 0;
+    situationAudioPreview.play().catch(console.warn);
+  });
+
+  situationAudioClear?.addEventListener("click", () => {
+    situationAudioInput.value = "";
+    existingPart3SituationAudioUrl = "";
+    situationAudioPreview?.pause();
+    situationAudioPreview?.removeAttribute("src");
+    situationAudioResult.textContent = "尚未選擇音檔";
+    situationAudioPreviewButton?.classList.add("hidden");
+    situationAudioClear?.classList.add("hidden");
+  });
+  [5, 6, 7].forEach((n) => {
+    const previewButton = document.getElementById(`qePart3Q${n}AudioPreviewButton`);
+    const preview = document.getElementById(`qePart3Q${n}AudioPreview`);
+    previewButton?.addEventListener("click", () => {
+      if (!preview?.src) return;
+      preview.currentTime = 0;
+      preview.play().catch(console.warn);
+    });
+  });
+
   const section = document.getElementById("qeSection");
   const type = document.getElementById("qeType");
   const standardFields = [
@@ -646,19 +703,45 @@ window.addEventListener("DOMContentLoaded", () => {
       n,
       prompt: document.getElementById(`qePart3Q${n}`)?.value.trim() || "",
       prep: Number(document.getElementById(`qePart3Q${n}Prep`)?.value || 0),
-      response: Number(document.getElementById(`qePart3Q${n}Response`)?.value || 0)
+      response: Number(document.getElementById(`qePart3Q${n}Response`)?.value || 0),
+      audioFile: document.getElementById(`qePart3Q${n}Audio`)?.files?.[0] || null
     }));
 
     if (!cleanCode) return qeMessage("請輸入 Part 3 題組代碼，例如 GYM01。");
     if (!passage) return qeMessage("請輸入 Q5–Q7 共用的 Situation / Passage。");
     if (rows.some(r => !r.prompt)) return qeMessage("請完整輸入 Question 5、6、7。");
+    const situationAudioFile =
+      situationAudioInput?.files?.[0] || null;
+    if (!situationAudioFile && !existingPart3SituationAudioUrl) {
+      return qeMessage("請選擇 Q5–Q7 共用 Situation 音檔。");
+    }
 
     batchSave.disabled = true;
-    batchSave.textContent = "正在建立 Q5–Q7…";
+    batchSave.textContent = qe.editingId ? "正在儲存 Part 3 題組…" : "正在建立 Q5–Q7…";
     qeClearMessage();
 
     const created = [];
     try {
+      let situationAudioUrl =
+        existingPart3SituationAudioUrl || "";
+
+      if (situationAudioFile) {
+        situationAudioResult.textContent =
+          "正在上傳 Situation 音檔…";
+
+        situationAudioUrl =
+          await uploadQuestionAsset(
+            situationAudioFile,
+            `part3/${cleanCode}/situation`
+          );
+
+        existingPart3SituationAudioUrl =
+          situationAudioUrl;
+
+        situationAudioResult.textContent =
+          `Situation 音檔已上傳：${situationAudioFile.name}`;
+      }
+
       for (const row of rows) {
         const payload = {
           question_code: `SPK-P3-${cleanCode}-Q${String(row.n).padStart(2,"0")}`,
@@ -666,7 +749,13 @@ window.addEventListener("DOMContentLoaded", () => {
           section_type: "speaking",
           question_type: "respond_question",
           title: `${title} - Question ${row.n}`,
-          directions: `P3_INTRO_SECONDS=${introSeconds}`,
+          // Part 3 共用 Situation 音檔標記同步寫入 Q5/Q6/Q7。
+          // 這樣舊題重新排序、單題編輯或測驗組卷後，仍可可靠找到共用音檔。
+          directions:
+            `P3_INTRO_SECONDS=${introSeconds}` +
+            (situationAudioUrl
+              ? `\nP3_SITUATION_AUDIO=${situationAudioUrl}`
+              : ""),
           passage,
           prompt: row.prompt,
           preparation_time: row.prep,
@@ -676,12 +765,36 @@ window.addEventListener("DOMContentLoaded", () => {
           image_url: "",
           audio_url: ""
         };
-        const result = await createQuestion(payload);
-        created.push(result);
+        const existing =
+          await findQuestionByCode(
+            payload.question_code
+          );
+
+        payload.audio_url =
+          existingPart3QuestionAudioUrls[row.n] ||
+          existing?.audio_url || "";
+
+        if (row.audioFile) {
+          payload.audio_url = await uploadQuestionAsset(
+            row.audioFile,
+            `part3/${cleanCode}/q${row.n}`
+          );
+          existingPart3QuestionAudioUrls[row.n] = payload.audio_url;
+        }
+
+        payload.image_url =
+          existing?.image_url || "";
+
+        const result =
+          await createOrUpdateQuestionByCode(
+            payload
+          );
+
+        created.push(result.question);
       }
 
       qeMessage(
-        `Part 3 題組建立完成：Q5 ${rows[0].response}s、Q6 ${rows[1].response}s、Q7 ${rows[2].response}s。接著可逐題上傳音檔，再到測驗組卷加入這三題。`,
+        `Part 3 題組已儲存：Situation → Q5 ${rows[0].response}s → Q6 ${rows[1].response}s → Q7 ${rows[2].response}s；各題原音檔會保留，選新檔才會更換。`,
         "success"
       );
       await loadTeacherPortalData();
@@ -695,9 +808,150 @@ window.addEventListener("DOMContentLoaded", () => {
       );
     } finally {
       batchSave.disabled = false;
-      batchSave.textContent = "一次建立 Q5–Q7";
+      batchSave.textContent = qe.editingId ? "儲存 Part 3 題組" : "一次建立 Q5–Q7";
     }
   }
+
+  window.openPart3GroupEditor = function(question) {
+    if (!question) return;
+
+    const code =
+      String(question.question_code || "");
+
+    const match =
+      code.match(/^SPK-P3-(.+)-Q(?:05|06|07)$/i);
+
+    if (!match) {
+      qeOpen(question);
+      return;
+    }
+
+    const groupCode = match[1];
+
+    const group =
+      (portalState.questions || [])
+        .filter((item) =>
+          new RegExp(
+            `^SPK-P3-${groupCode}-Q(?:05|06|07)$`,
+            "i"
+          ).test(String(item.question_code || ""))
+        )
+        .sort((a, b) =>
+          String(a.question_code).localeCompare(
+            String(b.question_code)
+          )
+        );
+
+    qeOpen(question);
+
+    batchMode = true;
+    section.value = "speaking";
+    syncQuestionTypeOptions();
+    type.value = "respond_question";
+
+    const q5 = group.find((item) =>
+      /-Q05$/i.test(item.question_code || "")
+    );
+    const first = q5 || group[0] || question;
+
+    document.getElementById("qePart3GroupCode").value =
+      groupCode;
+
+    document.getElementById("qePart3GroupTitle").value =
+      String(first.title || "Part 3 Question Set")
+        .replace(/\s*-\s*Question\s*[567]\s*$/i, "");
+
+    document.getElementById("qePart3Passage").value =
+      first.passage || "";
+
+    const secondsMatch =
+      String(first.directions || "")
+        .match(/P3_INTRO_SECONDS\s*=\s*(\d+)/i);
+
+    document.getElementById("qePart3IntroSeconds").value =
+      secondsMatch ? Number(secondsMatch[1]) : 10;
+
+    // 舊資料可能只把 Situation 音檔寫在 Q5，也可能存在 Q6/Q7。
+    // 編輯題組時掃描整組，避免明明有音檔卻顯示「尚未設定」。
+    const situationAudioOwner =
+      group.find((item) =>
+        /P3_SITUATION_AUDIO\s*=\s*\S+/i.test(
+          String(item.directions || "")
+        )
+      ) || first;
+
+    const audioMatch =
+      String(situationAudioOwner?.directions || "")
+        .match(/P3_SITUATION_AUDIO\s*=\s*(\S+)/i);
+
+    existingPart3SituationAudioUrl =
+      audioMatch ? audioMatch[1] : "";
+
+    if (existingPart3SituationAudioUrl) {
+      situationAudioPreview.src =
+        existingPart3SituationAudioUrl;
+      situationAudioResult.textContent =
+        "已載入原 Situation 音檔";
+      situationAudioPreviewButton?.classList.remove("hidden");
+      situationAudioClear?.classList.remove("hidden");
+    } else {
+      situationAudioResult.textContent =
+        "尚未設定 Situation 音檔";
+    }
+
+    [5, 6, 7].forEach((n) => {
+      const item =
+        group.find((row) =>
+          new RegExp(`-Q0?${n}$`, "i")
+            .test(row.question_code || "")
+        );
+
+      if (!item) return;
+
+      document.getElementById(`qePart3Q${n}`).value =
+        item.prompt || "";
+
+      document.getElementById(`qePart3Q${n}Prep`).value =
+        Number(item.preparation_time || 3);
+
+      document.getElementById(`qePart3Q${n}Response`).value =
+        Number(item.response_time || (n === 7 ? 30 : 15));
+
+      existingPart3QuestionAudioUrls[n] = item.audio_url || "";
+      const audioStatus = document.getElementById(`qePart3Q${n}AudioStatus`);
+      const audioPreview = document.getElementById(`qePart3Q${n}AudioPreview`);
+      const audioPreviewButton = document.getElementById(`qePart3Q${n}AudioPreviewButton`);
+      const audioInput = document.getElementById(`qePart3Q${n}Audio`);
+      if (audioInput) audioInput.value = "";
+      if (item.audio_url) {
+        if (audioStatus) audioStatus.textContent = "已載入原音檔；不選新檔會保留原音檔";
+        if (audioPreview) audioPreview.src = item.audio_url;
+        audioPreviewButton?.classList.remove("hidden");
+      } else {
+        if (audioStatus) audioStatus.textContent = "此題目前沒有音檔";
+        audioPreview?.removeAttribute("src");
+        audioPreviewButton?.classList.add("hidden");
+      }
+    });
+
+    if (batchSave) {
+      batchSave.textContent =
+        "儲存 Part 3 題組";
+    }
+
+    sync();
+    // qeOpen / type option rebuild may schedule another UI sync.
+    // Re-assert Part 3 group mode after the current event loop so old Q5-Q7
+    // never falls back to the generic single-question editor.
+    window.setTimeout(() => {
+      batchMode = true;
+      section.value = "speaking";
+      syncQuestionTypeOptions();
+      type.value = "respond_question";
+      sync();
+      panel?.scrollIntoView({ block: "start" });
+    }, 0);
+  };
 
   batchSave?.addEventListener("click", saveBatch);
   window.addEventListener("DOMContentLoaded", () => setTimeout(sync, 100));
@@ -794,10 +1048,13 @@ document.addEventListener("click", (event) => {
   const part4ImageClear = document.getElementById("qePart4ImageClear");
 
   let part4ImageObjectUrl = "";
+  let existingPart4ImageUrl = "";
+  let existingPart4InformationAudioUrl = "";
 
   function clearPart4ImageSelection() {
     if (part4ImageObjectUrl) URL.revokeObjectURL(part4ImageObjectUrl);
     part4ImageObjectUrl = "";
+    existingPart4ImageUrl = "";
     if (part4ImageInput) part4ImageInput.value = "";
     if (part4ImageResult) part4ImageResult.textContent = "尚未選擇圖片";
     if (part4ImagePreview) {
@@ -840,6 +1097,7 @@ document.addEventListener("click", (event) => {
     }
     if (part4AudioObjectUrl) URL.revokeObjectURL(part4AudioObjectUrl);
     part4AudioObjectUrl = "";
+    existingPart4InformationAudioUrl = "";
     if (part4AudioInput) part4AudioInput.value = "";
     if (part4AudioResult) part4AudioResult.textContent = "尚未選擇音檔";
     part4AudioPreviewButton?.classList.add("hidden");
@@ -902,20 +1160,40 @@ document.addEventListener("click", (event) => {
     }));
 
     if (!cleanCode) return qeMessage("請輸入 Part 4 題組代碼，例如 TOUR01。");
-    if (!imageFile) return qeMessage("請上傳 Q8–Q10 共用的 Information 圖片。");
+    if (!imageFile && !existingPart4ImageUrl) {
+      return qeMessage("請上傳 Q8–Q10 共用的 Information 圖片。");
+    }
 
     batchSave.disabled = true;
     batchSave.textContent = "正在儲存 Part 4 題組…";
     qeClearMessage();
 
     try {
-      const imageUrl = await uploadQuestionAsset(imageFile, `part4/${cleanCode}/information`);
-      let informationAudioUrl = "";
+      let imageUrl =
+        existingPart4ImageUrl || "";
+
+      if (imageFile) {
+        imageUrl =
+          await uploadQuestionAsset(
+            imageFile,
+            `part4/${cleanCode}/information`
+          );
+
+        existingPart4ImageUrl =
+          imageUrl;
+      }
+
+      let informationAudioUrl =
+        existingPart4InformationAudioUrl || "";
+
       if (informationAudioFile) {
         informationAudioUrl = await uploadQuestionAsset(
           informationAudioFile,
           `part4/${cleanCode}/information-audio`
         );
+
+        existingPart4InformationAudioUrl =
+          informationAudioUrl;
       }
       const part4Meta = [
         `P4_INFO_SECONDS=${infoSeconds}`,
@@ -984,6 +1262,122 @@ document.addEventListener("click", (event) => {
       batchSave.textContent = "儲存 Part 4 題組";
     }
   }
+
+  window.openPart4GroupEditor = function(question) {
+    if (!question) return;
+
+    const code =
+      String(question.question_code || "");
+
+    const match =
+      code.match(/^SPK-P4-(.+)-Q(?:08|09|10)$/i);
+
+    if (!match) {
+      qeOpen(question);
+      return;
+    }
+
+    const groupCode = match[1];
+
+    const group =
+      (portalState.questions || [])
+        .filter((item) =>
+          new RegExp(
+            `^SPK-P4-${groupCode}-Q(?:08|09|10)$`,
+            "i"
+          ).test(String(item.question_code || ""))
+        )
+        .sort((a, b) =>
+          String(a.question_code).localeCompare(
+            String(b.question_code)
+          )
+        );
+
+    qeOpen(question);
+
+    batchMode = true;
+    section.value = "speaking";
+    syncQuestionTypeOptions();
+    type.value = "respond_information";
+
+    const q8 =
+      group.find((item) =>
+        /-Q08$/i.test(item.question_code || "")
+      ) || group[0] || question;
+
+    document.getElementById("qePart4GroupCode").value =
+      groupCode;
+
+    document.getElementById("qePart4GroupTitle").value =
+      String(q8.title || "Part 4 Information Set")
+        .replace(/\s*-\s*Question\s*(8|9|10)\s*$/i, "");
+
+    document.getElementById("qePart4InformationText").value =
+      q8.passage || "";
+
+    const secondsMatch =
+      String(q8.directions || "")
+        .match(/P4_INFO_SECONDS\s*=\s*(\d+)/i);
+
+    document.getElementById("qePart4InfoSeconds").value =
+      secondsMatch ? Number(secondsMatch[1]) : 45;
+
+    const infoAudioMatch =
+      String(q8.directions || "")
+        .match(/P4_INFO_AUDIO_URL\s*=\s*(\S+)/i);
+
+    existingPart4InformationAudioUrl =
+      infoAudioMatch ? infoAudioMatch[1] : "";
+
+    existingPart4ImageUrl =
+      q8.image_url ||
+      group.find((item) => item.image_url)?.image_url ||
+      "";
+
+    if (existingPart4ImageUrl) {
+      part4ImagePreview.src =
+        existingPart4ImageUrl;
+      part4ImagePreview.classList.remove("hidden");
+      part4ImageResult.textContent =
+        "已載入原 Information 圖片";
+      part4ImageClear?.classList.remove("hidden");
+    }
+
+    if (existingPart4InformationAudioUrl) {
+      part4AudioPreview.src =
+        existingPart4InformationAudioUrl;
+      part4AudioResult.textContent =
+        "已載入原 Information 音檔";
+      part4AudioPreviewButton?.classList.remove("hidden");
+      part4AudioClear?.classList.remove("hidden");
+    }
+
+    [8, 9, 10].forEach((n) => {
+      const item =
+        group.find((row) =>
+          new RegExp(`-Q${n}$`, "i")
+            .test(row.question_code || "")
+        );
+
+      if (!item) return;
+
+      document.getElementById(`qePart4Q${n}`).value =
+        item.prompt || "";
+
+      document.getElementById(`qePart4Q${n}Prep`).value =
+        Number(item.preparation_time || 3);
+
+      document.getElementById(`qePart4Q${n}Response`).value =
+        Number(item.response_time || (n === 10 ? 30 : 15));
+    });
+
+    if (batchSave) {
+      batchSave.textContent =
+        "儲存 Part 4 題組";
+    }
+
+    sync();
+  };
 
   batchSave?.addEventListener("click", saveBatch);
   window.addEventListener("DOMContentLoaded", () => setTimeout(sync, 100));

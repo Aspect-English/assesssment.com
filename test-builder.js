@@ -86,7 +86,7 @@ const TestBuilder = (() => {
   }
 
   // full = 口說＋寫作，因此不額外排除題型
-  // quick 暫時也顯示全部，下一步再設定快速檢測專用題目
+  // quick 使用老師組卷指定的獨立測驗，題目可從口說及寫作題庫選取。
 
   // 題型下拉篩選
   if (type && q.question_type !== type) {

@@ -1184,12 +1184,12 @@ function renderQuestionTable() {
           (item) => item.id === button.dataset.editQuestion
         );
 
-        showComingSoonModal(
-          "題目編輯器",
-          question
-            ? `下一階段會開放編輯「${question.question_code}」，並提供學生端即時預覽。`
-            : "下一階段會開放題目編輯功能。"
-        );
+        if (
+          question &&
+          window.QuestionEditor?.open
+        ) {
+          window.QuestionEditor.open(question);
+        }
       });
     });
 

@@ -70,6 +70,11 @@
           題庫管理
         </button>
 
+        <a class="nav-item" href="quick-bank-import.html" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+          <span>＋</span>
+          快速檢測題庫匯入
+        </a>
+
         <button
           class="nav-item"
           data-section="directions"
@@ -815,6 +820,16 @@
           <strong id="recordDetailProgress">—</strong>
         </div>
 
+        <div>
+          <span>Overall / 5</span>
+          <strong id="recordDetailOverall">—</strong>
+        </div>
+
+        <div>
+          <span>預估 TOEIC 總分</span>
+          <strong id="recordDetailToeicScore">— / 200</strong>
+        </div>
+
       </div>
 
 
@@ -865,8 +880,8 @@
           <section id="qePart3BatchPanel" class="part3-batch-panel hidden">
             <div class="part3-batch-heading">
               <div>
-                <strong>Part 3 題組快速新增</strong>
-                <span>一次建立 Q5、Q6、Q7；三題共用 Passage，作答時依序解鎖。</span>
+                <strong>Part 3 題組新增／編輯</strong>
+                <span>新增時一次建立 Q5–Q7；編輯舊題時會載入整組與原本各題音檔。</span>
               </div>
               <button id="qePart3BatchToggle" class="secondary-action" type="button">切換為單題模式</button>
             </div>
@@ -886,6 +901,18 @@
               <span>Q5–Q7 共用 Situation / Passage *</span>
               <textarea id="qePart3Passage" rows="4" placeholder="Imagine that an American marketing company..."></textarea>
             </label>
+            <div class="asset-box part3-shared-asset-box">
+              <strong>Q5–Q7 共用 Situation 音檔 *</strong>
+              <small>MP3、WAV、OGG、M4A｜20 MB 內｜Situation 頁播放 1 次</small>
+              <input id="qePart3SituationAudio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.m4a">
+              <label class="asset-select-button" for="qePart3SituationAudio">選擇音檔</label>
+              <div class="part4-shared-asset-actions">
+                <button id="qePart3AudioPreviewButton" class="secondary-action hidden" type="button">▶ 試播音檔</button>
+                <button id="qePart3AudioClear" class="asset-clear-button hidden" type="button">取消／移除音檔</button>
+              </div>
+              <div id="qePart3SituationAudioResult" class="upload-result">尚未選擇音檔</div>
+              <audio id="qePart3AudioPreview" class="hidden" preload="metadata"></audio>
+            </div>
             <div class="form-grid two-column">
               <label class="editor-field">
                 <span>題組說明頁顯示時間（秒）</span>
@@ -904,6 +931,14 @@
                 <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q5Prep" type="number" min="0" value="3"></label>
                 <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q5Response" type="number" min="0" value="15"></label>
               </div>
+              <div class="asset-box part3-question-audio-box">
+                <strong>Question 5 題目音檔</strong>
+                <small id="qePart3Q5AudioStatus">尚未載入原音檔；未選新檔時會保留舊音檔</small>
+                <input id="qePart3Q5Audio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.m4a">
+                <label class="asset-select-button" for="qePart3Q5Audio">選擇／更換 Q5 音檔</label>
+                <button id="qePart3Q5AudioPreviewButton" class="secondary-action hidden" type="button">▶ 試播原音檔</button>
+                <audio id="qePart3Q5AudioPreview" class="hidden" preload="metadata"></audio>
+              </div>
             </div>
 
             <div class="part3-question-card">
@@ -912,6 +947,14 @@
               <div class="form-grid two-column">
                 <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q6Prep" type="number" min="0" value="3"></label>
                 <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q6Response" type="number" min="0" value="15"></label>
+              </div>
+              <div class="asset-box part3-question-audio-box">
+                <strong>Question 6 題目音檔</strong>
+                <small id="qePart3Q6AudioStatus">尚未載入原音檔；未選新檔時會保留舊音檔</small>
+                <input id="qePart3Q6Audio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.m4a">
+                <label class="asset-select-button" for="qePart3Q6Audio">選擇／更換 Q6 音檔</label>
+                <button id="qePart3Q6AudioPreviewButton" class="secondary-action hidden" type="button">▶ 試播原音檔</button>
+                <audio id="qePart3Q6AudioPreview" class="hidden" preload="metadata"></audio>
               </div>
             </div>
 
@@ -922,11 +965,19 @@
                 <label class="editor-field"><span>Preparation（秒）</span><input id="qePart3Q7Prep" type="number" min="0" value="3"></label>
                 <label class="editor-field"><span>Response（秒）</span><input id="qePart3Q7Response" type="number" min="0" value="30"></label>
               </div>
+              <div class="asset-box part3-question-audio-box">
+                <strong>Question 7 題目音檔</strong>
+                <small id="qePart3Q7AudioStatus">尚未載入原音檔；未選新檔時會保留舊音檔</small>
+                <input id="qePart3Q7Audio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.m4a">
+                <label class="asset-select-button" for="qePart3Q7Audio">選擇／更換 Q7 音檔</label>
+                <button id="qePart3Q7AudioPreviewButton" class="secondary-action hidden" type="button">▶ 試播原音檔</button>
+                <audio id="qePart3Q7AudioPreview" class="hidden" preload="metadata"></audio>
+              </div>
             </div>
 
             <div class="part3-batch-actions">
               <button id="qePart3BatchSave" class="primary-action" type="button">一次建立 Q5–Q7</button>
-              <small>建立後可回到題庫逐題編輯並上傳 Q5／Q6／Q7 音檔，再到「測驗組卷」加入測驗。</small>
+              <small>Q5／Q6／Q7 個別音檔可直接在此保留、試播或更換。</small>
             </div>
           </section>
 
@@ -1391,15 +1442,15 @@
 
   <!-- Student Records must load before teacher.js -->
   <script src="student-records-service.js?v=5.0.1"></script>
-  <script src="pdf-report-service.js?v=5.0.1"></script>
-  <script src="teacher-scoring-service.js?v=5.0.1"></script>
+  <script src="pdf-report-service.js?v=5.6.0"></script>
+  <script src="teacher-scoring-service.js?v=5.6.0"></script>
   <script src="ai-scoring-service.js?v=5.0.1"></script>
-  <script src="student-records.js?v=5.0.1"></script>
+  <script src="student-records.js?v=5.6.0"></script>
 
   <script src="dashboard-service.js?v=5.0.1"></script>
-  <script src="teacher.js?v=5.5.4"></script>
-  <script src="transcription-service.js?v=5.3.0"></script>
-<script src="question-editor.js?v=5.5.4"></script>
+  <script src="teacher.js?v=5.0.7-part3-group-edit"></script>
+  <script src="transcription-service.js?v=5.6.0"></script>
+<script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
 
 </body>

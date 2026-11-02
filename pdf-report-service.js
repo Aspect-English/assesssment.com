@@ -55,7 +55,14 @@ const PdfReportService = {
     return result;
   },
 
-  build({ session, responses, questions, scores }) {
+  estimateToeicScore(overall) {
+    const value = Number(overall);
+    if (!Number.isFinite(value)) return null;
+    const bounded = Math.min(5, Math.max(0, value));
+    return Math.round((((bounded / 5) * 200) / 10)) * 10;
+  },
+
+  build({ session, responses, questions, scores, aiAssessments = [] }) {
     const qMap = new Map(
       questions.map((question) => [question.id, question])
     );
@@ -65,6 +72,13 @@ const PdfReportService = {
     );
 
     const avg = this.averages(scores);
+    const estimatedToeicScore = this.estimateToeicScore(avg.overall);
+    const totalScoreText = estimatedToeicScore === null
+      ? "— / 200"
+      : `${estimatedToeicScore} / 200`;
+    const transcriptMap = new Map(
+      (aiAssessments || []).map((item) => [item.response_id, item.transcript || ""])
+    );
     const teachers = [
       ...new Set(
         scores
@@ -111,8 +125,11 @@ body{margin:0;color:#2f2939;background:#fff;font-family:"Microsoft JhengHei","No
 .header{padding-bottom:15px;display:flex;justify-content:space-between;gap:22px;border-bottom:2px solid #6d4cbe}
 .brand{color:#6d4cbe;font-size:12px;font-weight:900;letter-spacing:.08em}
 h1{margin:6px 0 3px;font-size:24px}.muted{color:#756e7f}
-.hero{min-width:120px;padding:12px 16px;color:#fff;background:#6d4cbe;border-radius:14px;text-align:center}
-.hero span,.hero strong{display:block}.hero span{font-size:9px}.hero strong{font-size:28px}
+.hero{min-width:165px;padding:12px 16px;color:#fff;background:#6d4cbe;border-radius:14px;text-align:center}
+.hero span,.hero strong,.hero small{display:block}.hero span{font-size:9px}.hero strong{font-size:28px}.hero small{margin-top:4px;font-size:8px;opacity:.9}
+.total-score{margin-top:14px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;border:2px solid #6d4cbe;border-radius:12px;background:#f7f3ff}
+.total-score span{font-size:10px;font-weight:800;color:#5f4b89}.total-score strong{font-size:24px;color:#6d4cbe}
+.score-note{margin-top:7px;color:#756e7f;font-size:8px}
 .meta{margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .card{padding:9px 10px;background:#f7f4fb;border:1px solid #e8e2ef;border-radius:9px}
 .card span,.card strong{display:block}.card span{color:#766f80;font-size:8px;font-weight:700}.card strong{margin-top:3px;font-size:10px;word-break:break-word}
@@ -133,7 +150,7 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 <div class="notice">請在列印視窗選擇「另存為 PDF」。</div>
 <header class="header">
   <div><div class="brand">ASPECT ENGLISH</div><h1>TOEIC Speaking Report</h1><div class="muted">Teacher-reviewed speaking assessment</div></div>
-  <div class="hero"><span>Overall / 5</span><strong>${avg.overall ?? "—"}</strong></div>
+  <div class="hero"><span>Overall / 5</span><strong>${avg.overall ?? "—"}</strong><small>Estimated TOEIC ${totalScoreText}</small></div>
 </header>
 <section class="meta">
   <div class="card"><span>學生姓名</span><strong>${this.e(session.student_name_snapshot || "未填姓名")}</strong></div>
@@ -145,6 +162,11 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
   <div class="card"><span>評分老師</span><strong>${this.e(teachers.join("、") || "—")}</strong></div>
   <div class="card"><span>產生時間</span><strong>${this.e(this.date(new Date().toISOString()))}</strong></div>
 </section>
+<section class="total-score">
+  <span>ESTIMATED TOEIC TOTAL SCORE</span>
+  <strong>${totalScoreText}</strong>
+</section>
+<div class="score-note">分數由本系統老師評分 Overall 換算為 0–200 預估分數，並四捨五入至 10 分級距；非 ETS 官方成績。</div>
 <h2>能力平均</h2>
 <section class="abilities">
   ${[

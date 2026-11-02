@@ -5,7 +5,10 @@
  */
 function generateUUID() {
 
-    return crypto.randomUUID();
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+    throw new Error("此網址不支援安全錄音與 UUID。請在本機使用 http://localhost:5501，其他裝置請改用 HTTPS 網址。");
 
 }
 

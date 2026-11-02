@@ -51,7 +51,7 @@ async function testSupabaseConnection() {
 }
 
 async function createTestSession(testData, totalQuestions = 3) {
-  const sessionId = crypto.randomUUID();
+  const sessionId = generateUUID();
 
   const sessionData = {
     id: sessionId,

@@ -16,6 +16,8 @@ const pages = {
   speaking: document.getElementById("speakingPage"),
 
   // TOEIC Writing
+  writingStart: document.getElementById("writingStartPage"),
+  writingDirectionsPage: document.getElementById("writingDirectionsPage"),
   writing: document.getElementById("writingPage"),
 
   completed: document.getElementById("completedPage")
@@ -235,6 +237,15 @@ const writingMainTimer =
 
 const writingDirections =
   document.getElementById("writingDirections");
+
+const writingStartContinueButton = document.getElementById("writingStartContinueButton");
+const writingDirectionsContinueButton = document.getElementById("writingDirectionsContinueButton");
+const writingDirectionsContinueButtonBottom = document.getElementById("writingDirectionsContinueButtonBottom");
+const writingDirectionsScreenTitle = document.getElementById("writingDirectionsScreenTitle");
+const writingDirectionsScreenText = document.getElementById("writingDirectionsScreenText");
+
+let writingPartDirections = {};
+let pendingWritingPartIndex = 0;
 
 const writingQuestionContent =
   document.getElementById("writingQuestionContent");
@@ -650,9 +661,17 @@ function closeDeviceHelp() {
  * 第一版先使用瀏覽器英文語音。
  * 後續會改成你們自己的 Direction 音檔。
  */
+let speakerTestLoopActive = false;
+
+function stopSpeakerTestAudioLoop() {
+  speakerTestLoopActive = false;
+  try { window.speechSynthesis?.cancel(); } catch (error) {}
+}
+
 function playSpeakerTestAudio({
   isAutomatic = false
 } = {}) {
+  speakerTestLoopActive = true;
   if (!("speechSynthesis" in window)) {
     speakerStatus.textContent =
       "目前瀏覽器無法播放測試語音。";
@@ -679,31 +698,38 @@ function playSpeakerTestAudio({
     speakerStatus.textContent =
       "正在自動播放測試聲音……";
 
-    speakerPassButton.disabled = true;
+    // V5.0.4：聲音一開始播放就允許學生確認。
+    // 循環播放不應把「聽得清楚，下一步」鎖住，
+    // 否則 PWA 的 speechSynthesis 若長時間不觸發 onend，
+    // 學生會永遠無法進入下一步。
+    speakerPassButton.disabled = false;
+
     playSpeakerTestButton.classList.add(
       "hidden"
     );
   };
 
   message.onend = () => {
-    speakerStatus.textContent =
-      "播放完成，請確認是否聽得清楚。";
+    if (!speakerTestLoopActive) return;
 
+    speakerStatus.textContent =
+      "測試聲音持續播放中，請調整至舒適音量。";
     speakerPassButton.disabled = false;
 
-    // 自動播放成功後不需要學生再按播放鍵。
-    if (!isAutomatic) {
-      playSpeakerTestButton.classList.remove(
-        "hidden"
-      );
-    }
+    // 持續循環播放，直到學生按「聽得清楚，下一步」。
+    window.setTimeout(() => {
+      if (speakerTestLoopActive) {
+        playSpeakerTestAudio({ isAutomatic: true });
+      }
+    }, 450);
   };
 
   message.onerror = () => {
     speakerStatus.textContent =
-      "自動播放未成功，請按「重新播放測試聲音」。";
+      "自動播放未成功，請重新播放測試聲音。";
 
-    speakerPassButton.disabled = true;
+    // 不把流程永久鎖死；重新播放按鈕仍可使用。
+    speakerPassButton.disabled = false;
     playSpeakerTestButton.classList.remove(
       "hidden"
     );
@@ -731,6 +757,7 @@ playSpeakerTestButton.addEventListener(
  * 耳機測試通過
  */
 speakerPassButton.addEventListener("click", () => {
+  stopSpeakerTestAudioLoop();
   showPage("microphone");
 });
 
@@ -1674,7 +1701,7 @@ async function persistAssessmentResponse(
   }
 
   const uploadId =
-    crypto.randomUUID();
+    generateUUID();
 
   const extension =
     audioBlob.type.includes("ogg")
@@ -2213,7 +2240,35 @@ function getPart3IntroSeconds(question) {
 }
 
 
-async function showPart3IntroPage(question) {
+function getPart3SituationAudioUrl(question, allQuestions = []) {
+  // Prefer the current question, but also scan Q5-Q7.
+  // Teacher batch editing may preserve the shared Situation audio marker
+  // on any one of the Part 3 rows, so the student must not assume Q5 owns it.
+  const candidates = [
+    question,
+    ...(Array.isArray(allQuestions) ? allQuestions : [])
+  ].filter((item, index, arr) =>
+    item &&
+    Number(item.part) === 3 &&
+    item.type === "respond_question" &&
+    arr.indexOf(item) === index
+  );
+
+  for (const item of candidates) {
+    const directions = String(item?.directions || "");
+    const match = directions.match(
+      /P3_SITUATION_AUDIO\s*=\s*(\S+)/i
+    );
+    if (match?.[1]) {
+      return String(match[1]).trim();
+    }
+  }
+
+  return "";
+}
+
+
+async function showPart3IntroPage(question, allQuestions = []) {
   if (
     speakingPart3IntroShown ||
     Number(question?.part) !== 3 ||
@@ -2269,11 +2324,48 @@ async function showPart3IntroPage(question) {
     "hidden"
   );
 
-  const seconds =
-    getPart3IntroSeconds(question);
+  const situationAudioUrl =
+    getPart3SituationAudioUrl(question, allQuestions);
 
-  // 題組說明頁只作閱讀用途，不顯示倒數數字。
-  await delay(seconds * 1000);
+  if (situationAudioUrl) {
+    assessmentStageText.textContent =
+      "Listen to the information";
+
+    assessmentAudioPrompt.textContent =
+      "🔊 Listen to the information.";
+
+    assessmentAudioPrompt.classList.remove(
+      "hidden"
+    );
+
+    try {
+      await playAudioFile(
+        situationAudioUrl
+      );
+    } catch (error) {
+      console.error(
+        "Part 3 Situation audio failed:",
+        error
+      );
+
+      assessmentStageText.textContent =
+        "Situation audio error";
+
+      throw new Error(
+        "Part 3 Situation 音檔無法播放，測驗已暫停。請通知工作人員。"
+      );
+    } finally {
+      assessmentAudioPrompt.classList.add(
+        "hidden"
+      );
+    }
+  } else {
+    // 相容既有 Part 3 題組。
+    const seconds =
+      getPart3IntroSeconds(question);
+
+    await delay(seconds * 1000);
+  }
 
   assessmentPromptText.classList.add(
     "hidden"
@@ -2305,7 +2397,8 @@ function createSpeakingAssessmentEngine(questions) {
           // Part 3 在 Direction 後先顯示一次共用題組說明頁。
           // 說明頁結束後才正式進入 Q5。
           await showPart3IntroPage(
-            question
+            question,
+            questions
           );
 
           // Part 4 在 Direction 後先顯示共用 Information 頁。
@@ -2544,7 +2637,14 @@ function createSpeakingAssessmentEngine(questions) {
 
   engine.addEventListener(
     "finished",
-    () => {
+    async () => {
+      // Full 模式：Speaking 完成後必須接續 Writing，不能直接完成整份測驗。
+      if (["full", "quick"].includes(testData.testType)) {
+        speakingAssessmentEngine = null;
+        await startWritingAssessmentPhase(writingQuestions);
+        return;
+      }
+
       showCompletedPage();
     }
   );
@@ -2559,78 +2659,254 @@ let speakingPart3IntroShown = false;
   speakingPart4InfoShown = false;
 let speakingDirectionPlayedParts = new Set();
 
-async function prepareSpeakingDirections() {
+async function prepareSpeakingDirections(selectedQuestions = []) {
   speakingDirectionsByPart = new Map();
   speakingDirectionPlayedParts = new Set();
   speakingDirectionFallbackQuestionIndex = -1;
   speakingPart3IntroShown = false;
+  speakingPart4InfoShown = false;
 
   if (
     typeof window.loadSpeakingDirections !==
     "function"
   ) {
-    return;
+    throw new Error(
+      "Direction service is not available."
+    );
   }
 
-  const rows =
-    await window.loadSpeakingDirections();
+  assessmentStageText.textContent =
+    "Loading Directions";
 
-  console.log(
-    "[Speaking Directions] Active rows:",
-    rows
+  const selectedParts = Array.isArray(selectedQuestions)
+    ? selectedQuestions.map((q, index) => resolveSpeakingPart(q, index)).filter(Boolean)
+    : [];
+  const requiredParts = [...new Set(selectedParts)];
+  let lastError = null;
+
+  // PWA / 網路環境下最多重試 4 次。
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const rows =
+        await window.loadSpeakingDirections();
+
+      const nextMap = new Map();
+
+      (rows || []).forEach((row) => {
+        const part = Number(row.part_number);
+
+        if (
+          Number.isInteger(part) &&
+          part >= 1 &&
+          part <= 5
+        ) {
+          nextMap.set(part, row);
+        }
+      });
+
+      const missingParts =
+        requiredParts.filter(
+          (part) => !nextMap.has(part)
+        );
+
+      if (missingParts.length > 0) {
+        throw new Error(
+          `Direction 尚未完整載入：Part ${missingParts.join(", ")}`
+        );
+      }
+
+      speakingDirectionsByPart = nextMap;
+
+      // 預先要求瀏覽器載入 Direction 音檔。
+      // 不在這裡播放，正式進入各 Part 時才播放。
+      nextMap.forEach((direction) => {
+        if (!direction?.audio_url) return;
+
+        try {
+          const audio = new Audio();
+          audio.preload = "auto";
+          audio.src = direction.audio_url;
+          audio.load();
+        } catch (error) {
+          console.warn(
+            "Direction audio preload failed:",
+            error
+          );
+        }
+      });
+
+      console.log(
+        "[Speaking Directions] ready:",
+        Array.from(nextMap.keys())
+      );
+
+      assessmentStageText.textContent =
+        "Directions ready";
+
+      return;
+    } catch (error) {
+      lastError = error;
+
+      console.warn(
+        `[Speaking Directions] attempt ${attempt}/4 failed:`,
+        error
+      );
+
+      assessmentStageText.textContent =
+        attempt < 4
+          ? `Loading Directions... (${attempt}/4)`
+          : "Directions could not be loaded";
+
+      if (attempt < 4) {
+        await delay(900);
+      }
+    }
+  }
+
+  throw new Error(
+    lastError?.message ||
+    "Directions could not be loaded. Please notify staff."
   );
-
-  rows.forEach((row) => {
-    speakingDirectionsByPart.set(
-      Number(row.part_number),
-      row
-    );
-  });
 }
 
-function resolveSpeakingPart(
-  question,
-  formalQuestionIndex = null
-) {
-  const explicitPart =
-    Number(
-      question?.part ??
-      question?.partNumber ??
-      question?.part_number ??
-      0
-    );
+function resolveSpeakingPart(question, formalQuestionIndex = null) {
+  // Match by actual question type first: custom/quick tests do not use full-test numbering.
+  const type = String(question?.type || question?.question_type || question?.questionType || "").toLowerCase();
+  const typeParts = {
+    read_aloud: 1,
+    describe_picture: 2,
+    respond_question: 3,
+    respond_information: 4,
+    express_opinion: 5
+  };
+  if (typeParts[type]) return typeParts[type];
 
-  if (
-    Number.isInteger(explicitPart) &&
-    explicitPart >= 1 &&
-    explicitPart <= 5
-  ) {
-    return explicitPart;
+  const section = String(question?.sectionType || question?.section_type || "").toLowerCase();
+  const code = String(question?.code || question?.question_code || "");
+  if (section.includes("speaking") || section === "speaking" || /^((QUICK|SPK)-)/i.test(code)) {
+    const codePart = code.match(/-P([1-5])(?:-|$)/i);
+    if (codePart) return Number(codePart[1]);
   }
 
-  const explicitQuestionNumber =
-    Number(
-      question?.questionNumber ??
-      question?.question_number ??
-      question?.number ??
-      0
-    );
+  const explicitPart = Number(question?.part ?? question?.partNumber ?? question?.part_number ?? 0);
+  if (Number.isInteger(explicitPart) && explicitPart >= 1 && explicitPart <= 5) return explicitPart;
 
-  const q =
-    explicitQuestionNumber ||
-    (
-      Number.isInteger(formalQuestionIndex)
-        ? formalQuestionIndex + 1
-        : 0
-    );
-
-  if (q >= 1 && q <= 2) return 1;
-  if (q >= 3 && q <= 4) return 2;
-  if (q >= 5 && q <= 7) return 3;
-  if (q >= 8 && q <= 10) return 4;
-  if (q === 11) return 5;
-
+  // Only legacy full-test records may fall back to fixed question numbering.
+  if (testData?.testType === "full" || testData?.testType === "speaking") {
+    const explicitNumber = Number(question?.questionNumber ?? question?.question_number ?? question?.number ?? 0);
+    const q = explicitNumber || (Number.isInteger(formalQuestionIndex) ? formalQuestionIndex + 1 : 0);
+    if (q >= 1 && q <= 2) return 1;
+    if (q >= 3 && q <= 4) return 2;
+    if (q >= 5 && q <= 7) return 3;
+    if (q >= 8 && q <= 10) return 4;
+    if (q === 11) return 5;
+  }
+  console.warn("Unable to determine speaking Part for Directions:", question?.code || question?.id);
   return 0;
+}
+
+async function playSpeakingDirectionAudio(url) {
+  if (!url) {
+    throw new Error("Direction audio URL is missing.");
+  }
+
+  let webAudioError = null;
+
+  // 第一層：Web Audio。PWA 已在「開始測驗」點擊時解鎖 AudioContext。
+  try {
+    const context = unlockAssessmentAudio();
+
+    if (context?.state === "suspended") {
+      await context.resume();
+    }
+
+    const response =
+      await fetch(url, {
+        cache: "no-store"
+      });
+
+    if (!response.ok) {
+      throw new Error(
+        `Direction audio HTTP ${response.status}`
+      );
+    }
+
+    const bytes =
+      await response.arrayBuffer();
+
+    const buffer =
+      await context.decodeAudioData(
+        bytes.slice(0)
+      );
+
+    await new Promise(
+      (resolve, reject) => {
+        const source =
+          context.createBufferSource();
+
+        source.buffer = buffer;
+        source.connect(
+          context.destination
+        );
+
+        source.onended = resolve;
+
+        try {
+          source.start(0);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    );
+
+    return;
+  } catch (error) {
+    webAudioError = error;
+    console.warn(
+      "Web Audio Direction failed; trying HTMLAudio:",
+      error
+    );
+  }
+
+  // 第二層：HTMLAudio。失敗時要 reject，不能像舊版一樣直接 resolve。
+  await new Promise((resolve, reject) => {
+    const audio = new Audio();
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(
+        error ||
+        webAudioError ||
+        new Error(
+          "Direction audio playback failed."
+        )
+      );
+    };
+
+    audio.preload = "auto";
+    audio.src = url;
+    audio.onended = finish;
+    audio.onerror = () =>
+      fail(
+        new Error(
+          "Direction audio could not be loaded."
+        )
+      );
+
+    const result = audio.play();
+
+    if (result?.catch) {
+      result.catch(fail);
+    }
+  });
 }
 
 async function playSpeakingDirectionIfNeeded(
@@ -2657,10 +2933,9 @@ async function playSpeakingDirectionIfNeeded(
     speakingDirectionsByPart.get(part);
 
   if (!direction) {
-    console.warn(
-      `[Speaking Directions] Part ${part} 沒有 Active Direction。`
+    throw new Error(
+      `Part ${part} Direction 尚未載入，測驗已暫停。請通知工作人員。`
     );
-    return;
   }
 
   assessmentPartLabel.textContent =
@@ -2710,21 +2985,15 @@ async function playSpeakingDirectionIfNeeded(
 
   try {
     if (direction.audio_url) {
-      const audio =
-        new Audio(direction.audio_url);
-
-      await audio.play();
-
-      await new Promise((resolve) => {
-        audio.onended = resolve;
-        audio.onerror = resolve;
-      });
+      await playSpeakingDirectionAudio(
+        direction.audio_url
+      );
 
     } else if (
       direction.directions_text &&
       "speechSynthesis" in window
     ) {
-      await new Promise((resolve) => {
+      await new Promise((resolve, reject) => {
         const msg =
           new SpeechSynthesisUtterance(
             direction.directions_text
@@ -2733,18 +3002,40 @@ async function playSpeakingDirectionIfNeeded(
         msg.lang = "en-US";
         msg.rate = 0.9;
         msg.onend = resolve;
-        msg.onerror = resolve;
+        msg.onerror = () =>
+          reject(
+            new Error(
+              `Part ${part} Direction speech playback failed.`
+            )
+          );
 
         window.speechSynthesis.speak(msg);
       });
+    } else {
+      throw new Error(
+        `Part ${part} Direction 沒有可播放的音檔或文字。`
+      );
     }
   } catch (error) {
-    console.warn(
+    assessmentStageText.textContent =
+      "Direction playback error";
+
+    assessmentPromptText.textContent =
+      `Part ${part} Direction 無法播放，測驗已暫停。請通知工作人員。`;
+
+    assessmentPromptText.classList.remove(
+      "hidden"
+    );
+
+    console.error(
       "Speaking Direction 播放失敗：",
       error
     );
+
+    throw error;
   }
 
+  // 只有真正播放完成才標記為已播放。
   speakingDirectionPlayedParts.add(part);
 
   await delay(350);
@@ -2759,6 +3050,8 @@ let currentWritingQuestionIndex = 0;
 let writingCountdownInterval = null;
 let writingRemainingSeconds = 0;
 let writingQuestionSubmitting = false;
+// V5.6.1：追蹤本次 Writing 已成功寫入 responses 的題目，避免計時跳 Part 時遺漏未送出的題目紀錄。
+let savedWritingQuestionKeys = new Set();
 let writingCurrentPartKey = null;
 
 function getWritingPartKey(question, index) {
@@ -2889,9 +3182,23 @@ function renderWritingQuestion(
 
   writingAnswer.value = "";
   writingWordCount.textContent = "0";
+  // 每一題各自從空白答案開始建立 Undo / Redo 歷史。
+  if (typeof resetWritingHistory === "function") resetWritingHistory();
 
+  // Writing Part 1–3：優先使用老師後台設定的固定 Directions。
+  const writingPart = question.type === "write_sentence" ? 1
+    : question.type === "respond_written_request" ? 2
+    : question.type === "opinion_essay" ? 3 : null;
+  const fallbackDirections = {
+    1: "Directions: Write ONE sentence based on the picture. Use the TWO words or phrases under the picture. You may change the forms of the words and you may use them in any order.",
+    2: "Directions: Read the information below. You will have 10 minutes to read and answer each e-mail.",
+    3: "Directions: Read the question below. You have 30 minutes to plan, write, and revise your essay."
+  };
+  const savedPartDirection = writingPartDirections[writingPart];
   writingDirections.textContent =
+    (savedPartDirection && savedPartDirection.text) ||
     question.directions ||
+    fallbackDirections[writingPart] ||
     "Read the question and write your response.";
 
   writingQuestionContent.textContent = "";
@@ -2912,20 +3219,32 @@ function renderWritingQuestion(
     }
   }
 
-  // Q6–7：回覆書面要求
+  // Q6–7：回覆書面要求（老師端 V5.19.2：完整 Email 題目可直接存於 image_url，作答要求存於 prompt）
   else if (question.type === "respond_written_request") {
-    writingQuestionContent.textContent =
-      [question.passage || "", question.promptText || ""]
-        .filter(Boolean)
-        .join("\n\n");
+    // passage 是舊版相容欄位；promptText 會映射老師端 question_bank.prompt。
+    const part2Text = [question.passage || "", question.promptText || ""]
+      .filter((value, index, arr) => value && arr.indexOf(value) === index)
+      .join("\n\n");
+    writingQuestionContent.textContent = part2Text;
+
+    // V5.19.2 允許老師只上傳完整 Email 題目圖片，因此 Part 2 必須顯示 image_url。
+    if (question.promptImagePath) {
+      writingQuestionImage.src = question.promptImagePath;
+      writingQuestionImage.classList.remove("hidden");
+    }
   }
 
-  // Q8：Opinion Essay
+  // Q8：Opinion Essay（prompt 為題目；若老師有上傳 image_url 也一併顯示）
   else if (question.type === "opinion_essay") {
     writingQuestionContent.textContent =
       question.promptText ||
       question.passage ||
       "Write an essay in response to the question.";
+
+    if (question.promptImagePath) {
+      writingQuestionImage.src = question.promptImagePath;
+      writingQuestionImage.classList.remove("hidden");
+    }
   }
 
   ensureWritingPartCountdown(question, index);
@@ -2937,9 +3256,77 @@ function renderWritingQuestion(
   writingAnswer.focus();
 }
 
+function getWritingPartNumber(question, index) {
+  const key = getWritingPartKey(question, index);
+  if (key === "writing_part_1") return 1;
+  if (key === "writing_part_2") return 2;
+  return 3;
+}
+
+function getWritingDirectionFallback(part) {
+  const fallbacks = {
+    1: {
+      title: "Questions 1–5: Write a sentence based on a picture",
+      text: "Directions: In this part of the test, you will write ONE sentence based on a picture. With each picture, you will be given TWO words or phrases that you must use in your sentence. You can change the forms of the words and use them in any order. Your sentence will be scored on appropriate grammar and relevance to the picture.\n\nYou will have 8 minutes to complete this part of the test."
+    },
+    2: {
+      title: "Questions 6–7: Respond to a written request",
+      text: "Directions: In this part of the test, you will write a response to an e-mail. Your response will be scored on the quality and variety of your sentences, vocabulary, and organization.\n\nQuestions 6 and 7 share a total response time of 20 minutes in this practice test."
+    },
+    3: {
+      title: "Question 8: Write an opinion essay",
+      text: "Directions: In this part of the test, you will write an essay in response to a question that asks you to state, explain, and support your opinion. An effective essay typically contains at least 300 words. Your response will be scored on support with reasons and/or examples, grammar, vocabulary, and organization.\n\nYou will have 30 minutes to plan, write, and revise your essay."
+    }
+  };
+  return fallbacks[part] || { title: "Writing Directions", text: "Read the directions and click Continue to begin." };
+}
+
+function showWritingPartDirections(index) {
+  pendingWritingPartIndex = index;
+  const question = writingQuestions[index];
+  if (!question) return;
+  const part = getWritingPartNumber(question, index);
+  const saved = writingPartDirections[part] || {};
+  const fallback = getWritingDirectionFallback(part);
+  writingDirectionsScreenTitle.textContent = saved.title || fallback.title;
+  writingDirectionsScreenText.textContent = saved.text || fallback.text;
+  showPage("writingDirectionsPage");
+}
+
+function beginPendingWritingPart() {
+  const index = pendingWritingPartIndex;
+  currentWritingQuestionIndex = index;
+  showPage("writing");
+  renderWritingQuestion(writingQuestions[index], index, writingQuestions.length);
+}
+
+function showWritingStartScreen() {
+  stopWritingCountdown();
+  writingCurrentPartKey = null;
+  writingRemainingSeconds = 0;
+  showPage("writingStart");
+}
+
+writingStartContinueButton?.addEventListener("click", () => showWritingPartDirections(0));
+writingDirectionsContinueButton?.addEventListener("click", beginPendingWritingPart);
+writingDirectionsContinueButtonBottom?.addEventListener("click", beginPendingWritingPart);
+
+async function ensureAllWritingResponseRows() {
+  // V5.6.1：完整模擬的學生紀錄必須保留每一題 Writing。
+  // 若某題因 Part 時間到而來不及逐題按 Next，仍建立空白 text response，
+  // 讓老師端可以看到該題，而不是整題從學生紀錄消失。
+  for (const question of writingQuestions) {
+    const key = String(question?.id || question?.code || question?.order || "");
+    if (!key || savedWritingQuestionKeys.has(key)) continue;
+    await saveWritingResponse(question, "");
+  }
+}
+
 async function completeWritingTest(statusText) {
   deactivateAssessmentSecurityMode();
   stopWritingCountdown();
+
+  await ensureAllWritingResponseRows();
 
   await updateTestSessionState(
     testData.sessionId,
@@ -2990,6 +3377,17 @@ async function handleWritingPartTimeout() {
       writingAnswer.value
     );
 
+    // 同一 Part 中尚未逐題送出的題目，也建立空白作答紀錄。
+    // 例如 Part 1 時間到停在 Q4，Q5 仍會出現在老師端並標示為未作答。
+    let skippedIndex = currentWritingQuestionIndex + 1;
+    while (skippedIndex < writingQuestions.length) {
+      const skippedQuestion = writingQuestions[skippedIndex];
+      const skippedPartKey = skippedQuestion.timerGroup || getWritingPartKey(skippedQuestion, skippedIndex);
+      if (skippedPartKey !== timedOutPartKey) break;
+      await saveWritingResponse(skippedQuestion, "");
+      skippedIndex += 1;
+    }
+
     // 尋找下一個不同 timer_group 的題目
     let nextIndex =
       currentWritingQuestionIndex + 1;
@@ -3035,13 +3433,7 @@ async function handleWritingPartTimeout() {
       currentWritingQuestionIndex + 1
     );
 
-    renderWritingQuestion(
-      writingQuestions[
-        currentWritingQuestionIndex
-      ],
-      currentWritingQuestionIndex,
-      writingQuestions.length
-    );
+    showWritingPartDirections(currentWritingQuestionIndex);
 
   } catch (error) {
     console.error(
@@ -3089,6 +3481,7 @@ async function handleWritingSubmit() {
       return;
     }
 
+    const previousPartKey = question.timerGroup || getWritingPartKey(question, currentWritingQuestionIndex);
     currentWritingQuestionIndex += 1;
 
     await updateCurrentQuestion(
@@ -3096,11 +3489,19 @@ async function handleWritingSubmit() {
       currentWritingQuestionIndex + 1
     );
 
-    renderWritingQuestion(
-      writingQuestions[currentWritingQuestionIndex],
-      currentWritingQuestionIndex,
-      writingQuestions.length
-    );
+    const nextQuestion = writingQuestions[currentWritingQuestionIndex];
+    const nextPartKey = nextQuestion.timerGroup || getWritingPartKey(nextQuestion, currentWritingQuestionIndex);
+    if (nextPartKey !== previousPartKey) {
+      stopWritingCountdown();
+      writingCurrentPartKey = null;
+      showWritingPartDirections(currentWritingQuestionIndex);
+    } else {
+      renderWritingQuestion(
+        nextQuestion,
+        currentWritingQuestionIndex,
+        writingQuestions.length
+      );
+    }
   } catch (error) {
     console.error("Writing 作答儲存失敗：", error);
     writingNextButton.disabled = false;
@@ -3395,9 +3796,11 @@ function isWritingPageActive() {
 }
 
 function filterEnglishWritingText(value) {
+  // Writing 作答僅允許英文字母、空白/換行與英文標點。
+  // 數字、中文、其他語系文字與 Emoji 一律移除。
   return String(value || "")
     .replace(
-      /[^A-Za-z0-9\s.,!?;:'"()\-\/&@#$%+*=_[\]{}]/g,
+      /[^A-Za-z\s.,!?;:'"()\-\/&@#$%+*=_[\]{}]/g,
       ""
     );
 }
@@ -3431,7 +3834,7 @@ function activateWritingSecurityMode() {
 
   if (writingSecurityNotice) {
     writingSecurityNotice.textContent =
-      "測驗進行中：僅可輸入英文、數字與英文標點。切換分頁、視窗或離開全螢幕將立即結束測驗。";
+      "測驗進行中：僅可輸入英文字母與英文標點。請使用題目頁面的 Cut、Paste、Undo、Redo；禁止右鍵與鍵盤複製貼上快捷鍵。切換分頁、視窗或離開全螢幕將立即結束測驗。";
 
     writingSecurityNotice.classList.remove(
       "hidden"
@@ -3487,7 +3890,7 @@ writingAnswer?.addEventListener(
       event.preventDefault();
 
       showWritingSecurityWarning(
-        "Writing 僅允許英文、數字與英文標點符號。"
+        "Writing 僅允許英文字母與英文標點符號。"
       );
     }
   }
@@ -3496,45 +3899,59 @@ writingAnswer?.addEventListener(
 writingAnswer?.addEventListener(
   "paste",
   (event) => {
-    if (!isWritingPageActive()) {
-      return;
-    }
-
-    const source =
-      event.clipboardData
-        ?.getData("text") || "";
-
-    const filtered =
-      filterEnglishWritingText(source);
-
-    if (filtered !== source) {
-      event.preventDefault();
-
-      const start =
-        writingAnswer.selectionStart;
-
-      const end =
-        writingAnswer.selectionEnd;
-
-      writingAnswer.setRangeText(
-        filtered,
-        start,
-        end,
-        "end"
-      );
-
-      writingAnswer.dispatchEvent(
-        new Event("input", {
-          bubbles: true
-        })
-      );
-
-      showWritingSecurityWarning(
-        "貼上的非英文內容已自動移除。"
-      );
-    }
+    if (!isWritingPageActive()) return;
+    event.preventDefault();
+    showWritingSecurityWarning(
+      "Writing 測驗期間禁止貼上內容。"
+    );
   }
 );
+
+["copy", "cut"].forEach((eventName) => {
+  writingAnswer?.addEventListener(eventName, (event) => {
+    if (!isWritingPageActive()) return;
+    event.preventDefault();
+    showWritingSecurityWarning(
+      "Writing 測驗期間禁止複製或剪下內容。"
+    );
+  });
+});
+
+writingAnswer?.addEventListener("drop", (event) => {
+  if (!isWritingPageActive()) return;
+  event.preventDefault();
+  showWritingSecurityWarning(
+    "Writing 測驗期間禁止拖曳文字或檔案。"
+  );
+});
+
+// IME / 語音輸入等若繞過 beforeinput，仍在 input 階段再次清理。
+writingAnswer?.addEventListener("input", () => {
+  if (!isWritingPageActive()) return;
+  const original = writingAnswer.value;
+  const filtered = filterEnglishWritingText(original);
+  if (filtered === original) return;
+  const caret = writingAnswer.selectionStart ?? filtered.length;
+  writingAnswer.value = filtered;
+  writingAnswer.setSelectionRange(
+    Math.min(caret, filtered.length),
+    Math.min(caret, filtered.length)
+  );
+  showWritingSecurityWarning(
+    "已移除非英文字母或非英文標點內容。"
+  );
+});
+
+window.addEventListener("keydown", (event) => {
+  if (!isWritingPageActive()) return;
+  const key = String(event.key || "").toLowerCase();
+  if ((event.ctrlKey || event.metaKey) && ["c", "v", "x", "z", "y"].includes(key)) {
+    event.preventDefault();
+    showWritingSecurityWarning(
+      "請使用題目頁面的 Cut、Paste、Undo、Redo 按鈕操作。"
+    );
+  }
+});
 
 document.addEventListener(
   "contextmenu",
@@ -3562,7 +3979,7 @@ async function saveWritingResponse(
   const text =
     String(answerText || "").trim();
 
-  const uploadId = crypto.randomUUID();
+  const uploadId = generateUUID();
 
   await saveResponse({
     uploadId,
@@ -3588,6 +4005,9 @@ async function saveWritingResponse(
     testData.sessionId,
     question.order
   );
+
+  const savedKey = String(question?.id || question?.code || question?.order || "");
+  if (savedKey) savedWritingQuestionKeys.add(savedKey);
 
   console.log("Writing 作答已儲存：", {
     question: question.code,
@@ -3676,6 +4096,12 @@ async function runSpeakingPracticeQuestion() {
     "active"
   );
 
+  // Practice 使用與正式題完全相同的計時器亮燈邏輯。
+  preparationTimerCard.classList.remove("hidden");
+  responseTimerCard.classList.remove("hidden");
+  preparationTimerCard.classList.add("active");
+  responseTimerCard.classList.remove("active");
+
   assessmentStageText.textContent =
     "Begin preparing now";
 
@@ -3707,6 +4133,9 @@ async function runSpeakingPracticeQuestion() {
 
   assessmentStageText.textContent =
     "Practice recording";
+
+  preparationTimerCard.classList.remove("active");
+  responseTimerCard.classList.add("active");
 
   assessmentRecordingDot.classList.add(
     "active"
@@ -3765,6 +4194,8 @@ async function runSpeakingPracticeQuestion() {
     assessmentRecordingDot.classList.remove(
       "active"
     );
+    preparationTimerCard.classList.remove("active");
+    responseTimerCard.classList.remove("active");
   }
 
   try {
@@ -3783,6 +4214,58 @@ async function runSpeakingPracticeQuestion() {
 }
 
 
+async function startWritingAssessmentPhase(preloadedQuestions = null) {
+  stopWritingCountdown();
+  writingQuestionSubmitting = false;
+  savedWritingQuestionKeys = new Set();
+  writingCurrentPartKey = null;
+  writingRemainingSeconds = 0;
+
+  showPage("writing");
+  activateWritingSecurityMode();
+
+  writingDirections.textContent = "Writing questions are loading...";
+  writingQuestionContent.textContent = "題目載入中……";
+
+  try {
+    if (!Array.isArray(preloadedQuestions) || !preloadedQuestions.length) {
+      const assessmentData = await loadWritingAssessmentQuestions();
+      writingQuestions = assessmentData.questions;
+    } else {
+      writingQuestions = preloadedQuestions;
+    }
+
+    try {
+      const directionRows = await loadWritingDirections();
+      writingPartDirections = Object.fromEntries(
+        directionRows.map(row => [Number(row.part_number), {
+          title: String(row.title || "").trim(),
+          text: String(row.directions_text || "").trim()
+        }])
+      );
+    } catch (directionError) {
+      console.warn("Writing Directions 載入失敗，改用內建預設值：", directionError);
+      writingPartDirections = {};
+    }
+
+    currentWritingQuestionIndex = 0;
+
+    await updateTestSessionState(testData.sessionId, {
+      status: "in_progress",
+      currentQuestion: 0,
+      totalQuestions: writingQuestions.length
+    });
+
+    showWritingStartScreen();
+  } catch (error) {
+    console.error("Writing 測驗載入失敗：", error);
+    writingDirections.textContent = "Writing Test";
+    writingQuestionContent.textContent =
+      error.message || "目前無法載入 Writing 題目，請通知工作人員。";
+    writingMainTimer.textContent = "--:--";
+  }
+}
+
 /**
  * 開始完整 11 題口說測驗
  */
@@ -3798,75 +4281,9 @@ beginTestButton.addEventListener(
     // Writing Only
     // =============================
     if (testData.testType === "writing") {
-  stopWritingCountdown();
-  writingQuestionSubmitting = false;
-  writingCurrentPartKey = null;
-  writingRemainingSeconds = 0;
-
-  showPage("writing");
-
-  activateWritingSecurityMode();
-
-  writingDirections.textContent =
-    "Writing questions are loading...";
-
-  writingQuestionContent.textContent =
-    "題目載入中……";
-
-  try {
-    const assessmentData =
-      await loadWritingAssessmentQuestions();
-
-    writingQuestions =
-      assessmentData.questions;
-
-    currentWritingQuestionIndex = 0;
-
-    await updateTestSessionState(
-      testData.sessionId,
-      {
-        status: "in_progress",
-        currentQuestion: 0,
-        totalQuestions:
-          writingQuestions.length
-      }
-    );
-
-    renderWritingQuestion(
-      writingQuestions[0],
-      0,
-      writingQuestions.length
-    );
-
-    console.log(
-      "Writing 題庫載入完成：",
-      {
-        source:
-          assessmentData.source,
-        questionCount:
-          writingQuestions.length
-      }
-    );
-
-  } catch (error) {
-    console.error(
-      "Writing 測驗載入失敗：",
-      error
-    );
-
-    writingDirections.textContent =
-      "Writing Test";
-
-    writingQuestionContent.textContent =
-      error.message ||
-      "目前無法載入 Writing 題目，請通知工作人員。";
-
-    writingMainTimer.textContent =
-      "--:--";
-  }
-
-  return;
-}
+      await startWritingAssessmentPhase();
+      return;
+    }
 
 
     // =============================
@@ -3881,15 +4298,64 @@ beginTestButton.addEventListener(
       "Practice is starting";
 
     try {
-      await runSpeakingPracticeQuestion();
-
+      // Load the actual assessment questions before validating the relevant Directions.
       assessmentStageText.textContent =
         "Loading formal questions";
 
-      const assessmentData =
-        await loadSpeakingAssessmentQuestions();
+      let assessmentData;
 
-      await prepareSpeakingDirections();
+      if (["full", "quick"].includes(testData.testType)) {
+        const fullAssessmentData = testData.testType === "quick"
+          ? await loadQuickAssessmentQuestions()
+          : await loadFullAssessmentQuestions();
+
+        writingQuestions = fullAssessmentData.writingQuestions;
+        assessmentData = {
+          source: fullAssessmentData.source,
+          test: fullAssessmentData.test,
+          questions: fullAssessmentData.speakingQuestions
+        };
+      } else {
+        assessmentData = await loadSpeakingAssessmentQuestions();
+      }
+
+
+      // 依本次正式題目的 Part 載入 Directions，缺少時禁止開始。
+      try {
+        await prepareSpeakingDirections(assessmentData.questions);
+      } catch (directionError) {
+        console.error(
+          "Directions are required:",
+          directionError
+        );
+
+        assessmentStageText.textContent =
+          "Directions unavailable";
+
+        assessmentQuestionType.textContent =
+          "Speaking Test";
+
+        assessmentPromptText.textContent =
+          directionError.message ||
+          "Directions 無法載入，請通知工作人員。";
+
+        assessmentPromptText.classList.remove(
+          "hidden"
+        );
+
+        preparationTimerCard.classList.add(
+          "hidden"
+        );
+
+        responseTimerCard.classList.add(
+          "hidden"
+        );
+
+        beginTestButton.disabled = false;
+        return;
+      }
+
+      await runSpeakingPracticeQuestion();
 
       console.log(
         "本次題目來源：",
@@ -4109,6 +4575,52 @@ window.addEventListener(
 
 let writingWordCountVisible = true;
 
+// V5.5.5：測驗內部剪貼簿。只接受本答案框透過 Cut 按鈕剪下的文字，
+// 不讀取 Windows / macOS 系統剪貼簿，避免外部內容透過 Paste 按鈕帶入。
+let writingInternalClipboard = "";
+
+// V5.5.6：Writing 內部 Undo / Redo 歷史，不依賴瀏覽器 execCommand。
+let writingUndoStack = [];
+let writingRedoStack = [];
+let writingHistoryRestoring = false;
+
+function getWritingSnapshot() {
+  return {
+    value: writingAnswer?.value ?? "",
+    start: writingAnswer?.selectionStart ?? 0,
+    end: writingAnswer?.selectionEnd ?? 0
+  };
+}
+
+function resetWritingHistory() {
+  writingUndoStack = [getWritingSnapshot()];
+  writingRedoStack = [];
+}
+
+function recordWritingHistory() {
+  if (writingHistoryRestoring || !writingAnswer) return;
+  const next = getWritingSnapshot();
+  const last = writingUndoStack[writingUndoStack.length - 1];
+  if (last && last.value === next.value && last.start === next.start && last.end === next.end) return;
+  writingUndoStack.push(next);
+  if (writingUndoStack.length > 300) writingUndoStack.shift();
+  writingRedoStack = [];
+}
+
+function restoreWritingSnapshot(snapshot) {
+  if (!snapshot || !writingAnswer) return;
+  writingHistoryRestoring = true;
+  writingAnswer.value = snapshot.value;
+  writingAnswer.focus();
+  const max = writingAnswer.value.length;
+  writingAnswer.setSelectionRange(
+    Math.min(snapshot.start, max),
+    Math.min(snapshot.end, max)
+  );
+  writingHistoryRestoring = false;
+  updateWritingWordCount();
+}
+
 
 /**
  * 計算 Writing 字數
@@ -4150,16 +4662,7 @@ writingCutButton.addEventListener(
         end
       );
 
-    try {
-      await navigator.clipboard.writeText(
-        selectedText
-      );
-    } catch (error) {
-      console.warn(
-        "無法寫入剪貼簿：",
-        error
-      );
-    }
+    writingInternalClipboard = filterEnglishWritingText(selectedText);
 
     writingAnswer.setRangeText(
       "",
@@ -4185,39 +4688,26 @@ writingPasteButton.addEventListener(
   async () => {
     writingAnswer.focus();
 
-    try {
-      const clipboardText =
-        await navigator.clipboard.readText();
-
-      const start =
-        writingAnswer.selectionStart;
-
-      const end =
-        writingAnswer.selectionEnd;
-
-      writingAnswer.setRangeText(
-        clipboardText,
-        start,
-        end,
-        "end"
+    if (!writingInternalClipboard) {
+      showWritingSecurityWarning(
+        "目前沒有可貼上的測驗內文字；請先使用 Cut 按鈕剪下答案內容。"
       );
-
-      writingAnswer.dispatchEvent(
-        new Event("input", {
-          bubbles: true
-        })
-      );
-
-    } catch (error) {
-      console.warn(
-        "瀏覽器不允許直接讀取剪貼簿：",
-        error
-      );
-
-      alert(
-        "瀏覽器目前不允許使用 Paste 按鈕，請使用 Ctrl + V 貼上。"
-      );
+      return;
     }
+
+    const start = writingAnswer.selectionStart;
+    const end = writingAnswer.selectionEnd;
+
+    writingAnswer.setRangeText(
+      writingInternalClipboard,
+      start,
+      end,
+      "end"
+    );
+
+    writingAnswer.dispatchEvent(
+      new Event("input", { bubbles: true })
+    );
   }
 );
 
@@ -4229,10 +4719,10 @@ writingUndoButton.addEventListener(
   "click",
   () => {
     writingAnswer.focus();
-
-    document.execCommand("undo");
-
-    updateWritingWordCount();
+    if (writingUndoStack.length <= 1) return;
+    const current = writingUndoStack.pop();
+    writingRedoStack.push(current);
+    restoreWritingSnapshot(writingUndoStack[writingUndoStack.length - 1]);
   }
 );
 
@@ -4244,10 +4734,10 @@ writingRedoButton.addEventListener(
   "click",
   () => {
     writingAnswer.focus();
-
-    document.execCommand("redo");
-
-    updateWritingWordCount();
+    if (!writingRedoStack.length) return;
+    const next = writingRedoStack.pop();
+    writingUndoStack.push(next);
+    restoreWritingSnapshot(next);
   }
 );
 
@@ -4259,6 +4749,7 @@ writingAnswer.addEventListener(
   "input",
   () => {
     updateWritingWordCount();
+    recordWritingHistory();
   }
 );
 

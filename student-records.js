@@ -528,6 +528,9 @@ const StudentRecordsModule = (() => {
 
     state.currentReportData = null;
 
+    if ($("recordDetailOverall")) $("recordDetailOverall").textContent = "—";
+    if ($("recordDetailToeicScore")) $("recordDetailToeicScore").textContent = "— / 200";
+
     const exportButton =
       $("exportStudentReportButton");
 
@@ -614,11 +617,24 @@ const StudentRecordsModule = (() => {
           )
         );
 
+      const sessionOverall =
+        TeacherScoringService.calculateSessionOverall(scores);
+      const estimatedToeicScore =
+        TeacherScoringService.estimateToeicScore(sessionOverall);
+
+      $("recordDetailOverall").textContent =
+        sessionOverall ?? "—";
+      $("recordDetailToeicScore").textContent =
+        estimatedToeicScore === null
+          ? "— / 200"
+          : `${estimatedToeicScore} / 200`;
+
       state.currentReportData = {
         session,
         responses,
         questions,
-        scores
+        scores,
+        aiAssessments
       };
 
       exportButton.disabled = false;
@@ -747,7 +763,28 @@ const StudentRecordsModule = (() => {
                     `
                 }
 
-                ${""}
+                <div class="transcript-panel" data-transcript-panel="${escapeHtml(response.id)}">
+                  <div class="transcript-panel-heading">
+                    <div>
+                      <strong>錄音逐字稿</strong>
+                      <span>將本題學生錄音轉換成文字並儲存</span>
+                    </div>
+                    <button
+                      class="transcript-button"
+                      type="button"
+                      data-transcribe-response="${escapeHtml(response.id)}"
+                      ${audioUrl ? "" : "disabled"}
+                    >
+                      ${aiAssessment?.transcript ? "重新轉換" : "轉換逐字稿"}
+                    </button>
+                  </div>
+                  <div class="transcript-status ${aiAssessment?.transcript ? "completed" : "idle"}" data-transcript-status>
+                    ${aiAssessment?.transcript ? "已儲存逐字稿" : (audioUrl ? "尚未轉換" : "此題沒有可用錄音") }
+                  </div>
+                  <div class="transcript-text ${aiAssessment?.transcript ? "" : "hidden"}" data-transcript-text>
+                    ${escapeHtml(aiAssessment?.transcript || "")}
+                  </div>
+                </div>
 
                 <div class="score-panel" data-score-panel="${escapeHtml(response.id)}">
                   <div class="score-panel-heading">
@@ -796,6 +833,51 @@ const StudentRecordsModule = (() => {
             `;
           }
         ).join("");
+
+      list.querySelectorAll("[data-transcribe-response]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const responseId = button.dataset.transcribeResponse;
+          const panel = button.closest("[data-transcript-panel]");
+          const status = panel.querySelector("[data-transcript-status]");
+          const text = panel.querySelector("[data-transcript-text]");
+
+          button.disabled = true;
+          button.textContent = "轉換中……";
+          status.className = "transcript-status processing";
+          status.textContent = "正在將學生錄音轉換為逐字稿……";
+
+          try {
+            const result =
+              await TranscriptionService.transcribeResponse(responseId);
+
+            text.textContent = result.transcript;
+            text.classList.remove("hidden");
+            status.className = "transcript-status completed";
+            status.textContent = "逐字稿已轉換並儲存";
+            button.textContent = "重新轉換";
+
+            const existing = aiMap.get(responseId) || {};
+            aiMap.set(responseId, {
+              ...existing,
+              ...(result.assessment || {}),
+              transcript: result.transcript
+            });
+
+            if (state.currentReportData) {
+              state.currentReportData.aiAssessments =
+                [...aiMap.values()];
+            }
+          } catch (error) {
+            console.error("逐字稿轉換失敗：", error);
+            status.className = "transcript-status failed";
+            status.textContent =
+              `轉換失敗：${error.message || "未知錯誤"}`;
+            button.textContent = "重新嘗試";
+          } finally {
+            button.disabled = false;
+          }
+        });
+      });
 
       list.querySelectorAll("[data-score-panel]").forEach((panel) => {
         const updateOverall = () => {

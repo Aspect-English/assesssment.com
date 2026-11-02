@@ -9,6 +9,23 @@ const TeacherScoringService = {
     );
   },
 
+  calculateSessionOverall(scores) {
+    return this.calculateOverall(
+      (scores || []).map((score) => score?.overall)
+    );
+  },
+
+  estimateToeicScore(overall) {
+    const value = Number(overall);
+    if (!Number.isFinite(value)) return null;
+
+    const bounded = Math.min(5, Math.max(0, value));
+    const raw = (bounded / 5) * 200;
+
+    // TOEIC Speaking/Writing score reports use 10-point increments.
+    return Math.round(raw / 10) * 10;
+  },
+
   async getScoresBySession(sessionId) {
     const { data, error } = await supabaseClient
       .from("teacher_scores")

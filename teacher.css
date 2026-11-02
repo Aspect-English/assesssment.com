@@ -1728,3 +1728,19 @@ body.record-detail-open {
 #qePart4BatchPanel:not(.hidden) ~ #qeIndividualTimingRow {
   display: none !important;
 }
+
+/* V5.6.0 - Student recording transcript */
+.transcript-panel{margin-top:14px;padding:15px;background:#f8fbff;border:1px solid #d9e6f3;border-radius:12px}
+.transcript-panel-heading{display:flex;justify-content:space-between;gap:14px;align-items:center}
+.transcript-panel-heading strong,.transcript-panel-heading span{display:block}
+.transcript-panel-heading strong{color:#2f4f70;font-size:13px}
+.transcript-panel-heading span{margin-top:3px;color:#778493;font-size:9px}
+.transcript-button{min-height:38px;padding:0 13px;border:1px solid #9ebbd8;border-radius:9px;color:#315d87;background:#fff;font-size:10px;font-weight:800;cursor:pointer}
+.transcript-button:disabled{opacity:.5;cursor:not-allowed}
+.transcript-status{margin-top:11px;padding:8px 10px;border-radius:8px;font-size:10px}
+.transcript-status.idle{color:#6f7780;background:#edf3f8}
+.transcript-status.processing{color:#75561c;background:#fff2cd}
+.transcript-status.completed{color:#17603e;background:#e1f4e9}
+.transcript-status.failed{color:#9b2f3e;background:#ffe7eb}
+.transcript-text{margin-top:10px;padding:12px;white-space:pre-wrap;word-break:break-word;color:#313943;background:#fff;border:1px solid #dce6ef;border-radius:9px;font-size:11px;line-height:1.7}
+@media(max-width:620px){.transcript-panel-heading{align-items:stretch;flex-direction:column}.transcript-button{width:100%}}

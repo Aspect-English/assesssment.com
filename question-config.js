@@ -1,10 +1,6 @@
 "use strict";
 
-const ASSESSMENT_SETTINGS = {
-  // 測試時設為 true：長時間會縮短成 2–3 秒。
-  // 正式使用前改為 false。
-  demoMode: true
-};
+// Demo 設定統一由 assessment-settings.js 管理。
 
 const SPEAKING_QUESTION_FLOW = [
   {
