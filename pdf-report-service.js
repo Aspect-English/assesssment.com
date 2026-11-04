@@ -146,6 +146,7 @@ const PdfReportService = {
 
     const questionDetails = responses.map((response) => {
       const question = qMap.get(response.question_id);
+      const score = sMap.get(response.id);
       const image = String(question?.image_url || "").trim();
       let imageHtml = "";
       if (image && !/^(?:data:|javascript:|blob:|\/\/)/i.test(image)) {
