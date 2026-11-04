@@ -145,7 +145,7 @@ const PdfReportService = {
     }).join("");
 
     // Each question begins on a new printed page; oversized content may continue naturally.
-    const questionDetails = responses.map((response) => {
+    const questionDetails = responses.map((response, questionIndex) => {
       const question = qMap.get(response.question_id);
       const score = sMap.get(response.id);
       const image = String(question?.image_url || "").trim();
@@ -175,6 +175,7 @@ const PdfReportService = {
         return img && link ? `<div class="audio-qr"><img src="${this.e(img)}" alt="${this.e(label)} QR Code"/><strong>${this.e(label)}</strong><small>掃描播放 · 30 天內有效</small><a href="${this.e(link)}">開啟音檔</a></div>` : "";
       }).join("");
       return `<section class="question-detail">
+        ${questionIndex === 0 ? `<h2 class="question-list-title">題目與學生作答</h2>` : ""}
         <div class="question-intro">
           <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
           <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
@@ -229,11 +230,55 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 .question-passage>div,.question-prompt>div{margin-top:7px;white-space:pre-wrap;line-height:1.8}
 @media print{.review-body.corrected{min-height:18mm}.review-body.feedback{min-height:16mm}.question-detail{break-before:page;page-break-before:always}.question-detail + .question-detail{break-before:page;page-break-before:always}}
 .audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
-@media print{.notice{display:none}}
+/* Keep the entire scoring summary together on one printed sheet. */
+.report-summary{break-inside:avoid;page-break-inside:avoid}
+.question-list-title{margin:0 0 10px}
+/* A4 compact print layout: keep each question together whenever it fits. */
+@media print{
+  @page{size:A4;margin:10mm 11mm}
+  body{font-size:9.5px;line-height:1.35}
+  .report-summary{break-inside:avoid-page;page-break-inside:avoid;display:block}
+  .report-summary .header{padding-bottom:8px}
+  .report-summary h1{font-size:19px;margin:3px 0}
+  .report-summary .hero{padding:7px 11px}
+  .report-summary .hero strong{font-size:23px}
+  .report-summary .meta{margin-top:8px;gap:5px}
+  .report-summary .card{padding:5px 7px}
+  .report-summary .total-score{margin-top:8px;padding:7px 10px}
+  .report-summary h2{margin:9px 0 5px;font-size:12px}
+  .report-summary .abilities{gap:4px}
+  .report-summary .ability{padding:5px 3px}
+  .report-summary .ability strong{font-size:14px;margin-top:2px}
+  .report-summary th,.report-summary td{padding:3px 4px;font-size:7px;line-height:1.25;overflow-wrap:anywhere}
+  .report-summary td:first-child{width:19%}
+  .report-summary th:last-child,.report-summary td:last-child{width:19%}
+  .report-summary tr{break-inside:avoid;page-break-inside:avoid}
+  .question-list-title{margin:0 0 6px}
+  .question-detail{break-before:page;page-break-before:always;break-inside:avoid-page;page-break-inside:avoid;padding:8px 10px;margin:0;border-radius:6px}
+  .question-detail h3{font-size:11px;margin:0 0 4px}
+  .question-detail div{margin:3px 0}
+  .question-intro{break-inside:avoid-page;page-break-inside:avoid}
+  .question-passage,.question-prompt{margin:5px 0;padding:6px 8px;break-inside:avoid-page;page-break-inside:avoid}
+  .question-passage>div,.question-prompt>div{margin-top:4px;line-height:1.4}
+  .question-image{max-height:140px;margin:4px auto}
+  .audio-qr-list{gap:8px;margin:5px 0}
+  .audio-qr{width:110px;padding:4px;gap:1px}
+  .audio-qr img{width:76px;height:76px}
+  .audio-qr strong{font-size:8px}.audio-qr small,.audio-qr a{font-size:7px}
+  .review-section{margin:5px 0;break-inside:avoid-page;page-break-inside:avoid}
+  .review-label{padding:4px 7px;font-size:9px}
+  .review-label span{font-size:8px}
+  .review-body{padding:6px 8px;font-size:9.5px;line-height:1.4}
+  .review-body.corrected{min-height:13mm}
+  .review-body.feedback{min-height:11mm}
+  .notice{display:none}
+}
+
 </style>
 </head>
 <body>
 <div class="notice">請在列印視窗選擇「另存為 PDF」。</div>
+<div class="report-summary">
 <header class="header">
   <div><div class="brand">ASPECT ENGLISH</div><h1>TOEIC Speaking Report</h1><div class="muted">Teacher-reviewed speaking assessment</div></div>
   <div class="hero"><span>Overall / 5</span><strong>${avg.overall ?? "—"}</strong><small>Estimated TOEIC ${totalScoreText}</small></div>
@@ -269,7 +314,7 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 <thead><tr><th>題目</th><th>Pron.</th><th>Int.</th><th>Gram.</th><th>Vocab.</th><th>Content</th><th>Overall</th><th>老師評語</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
-<h2>題目與學生作答</h2>
+</div>
 ${questionDetails}
 <footer class="footer"><span>Aspect English - TOEIC SW Assessment Platform</span><span>本報告為老師評閱結果，非 ETS 官方成績單。</span></footer>
 <script>window.addEventListener("load",()=>setTimeout(()=>window.print(),300));</script>
