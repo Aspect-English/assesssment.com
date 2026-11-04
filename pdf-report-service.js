@@ -174,10 +174,12 @@ const PdfReportService = {
         return img && link ? `<div class="audio-qr"><img src="${this.e(img)}" alt="${this.e(label)} QR Code"/><strong>${this.e(label)}</strong><small>掃描播放 · 30 天內有效</small><a href="${this.e(link)}">開啟音檔</a></div>` : "";
       }).join("");
       return `<section class="question-detail">
-        <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
-        <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
-        ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
-        ${question?.passage ? `<div class="question-passage"><strong>題目閱讀資料 / Source Material：</strong><div>${this.e(question.passage)}</div></div>` : ""}
+        <div class="question-intro">
+          <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
+          <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
+          ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
+          ${question?.passage ? `<div class="question-passage"><strong>題目閱讀資料 / Source Material：</strong><div>${this.e(question.passage)}</div></div>` : ""}
+        </div>
         ${question?.prompt ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>${this.e(question.prompt)}</div></div>` : (!question?.passage ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>此題尚未儲存題目內文，請於老師題庫確認。</div></div>` : "")}
         ${imageHtml}
         ${qrHtml ? `<div class="audio-qr-list">${qrHtml}</div>` : ""}
@@ -216,12 +218,12 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
 .question-detail{break-inside:auto;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
-.review-section{margin:13px 0;break-inside:avoid;page-break-inside:avoid}
+.review-section{margin:13px 0;break-inside:avoid;page-break-inside:avoid}.review-label{break-after:avoid;page-break-after:avoid}
 .review-label{padding:7px 10px;border-left:3px solid #6d4cbe;background:#eee9f7;color:#503c7a;font-size:10px;font-weight:800}
 .review-label span{float:right;color:#756e7f;font-size:9px;font-weight:600}
 .review-body{padding:12px 14px;border:1px solid #e4dced;border-top:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.85}
 .review-body.original{background:#fbfaff}.review-body.corrected{background:#fff;min-height:145px}.review-body.feedback{background:#f9f7fc;min-height:115px}
-.question-passage,.question-prompt{margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
+.question-intro{break-inside:avoid;page-break-inside:avoid}.question-passage,.question-prompt{break-inside:avoid;page-break-inside:avoid;margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
 .question-prompt{border-left:3px solid #6d4cbe;background:#f7f3fc}
 .question-passage>div,.question-prompt>div{margin-top:7px;white-space:pre-wrap;line-height:1.8}
 @media print{.review-body.corrected{min-height:38mm}.review-body.feedback{min-height:30mm}}
