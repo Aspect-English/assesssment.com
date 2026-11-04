@@ -144,6 +144,7 @@ const PdfReportService = {
         </tr>`;
     }).join("");
 
+    // Each question begins on a new printed page; oversized content may continue naturally.
     const questionDetails = responses.map((response) => {
       const question = qMap.get(response.question_id);
       const score = sMap.get(response.id);
@@ -217,16 +218,16 @@ td:first-child{width:22%}td:first-child strong,td:first-child span{display:block
 th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:last-child{width:22%;text-align:left}
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
-.question-detail{break-inside:auto;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
+.question-detail{break-before:page;page-break-before:always;break-inside:auto;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
 .review-section{margin:13px 0;break-inside:avoid;page-break-inside:avoid}.review-label{break-after:avoid;page-break-after:avoid}
 .review-label{padding:7px 10px;border-left:3px solid #6d4cbe;background:#eee9f7;color:#503c7a;font-size:10px;font-weight:800}
 .review-label span{float:right;color:#756e7f;font-size:9px;font-weight:600}
 .review-body{padding:12px 14px;border:1px solid #e4dced;border-top:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.85}
 .review-body.original{background:#fbfaff}.review-body.corrected{background:#fff;min-height:145px}.review-body.feedback{background:#f9f7fc;min-height:115px}
-.question-intro{break-inside:avoid;page-break-inside:avoid}.question-passage,.question-prompt{break-inside:avoid;page-break-inside:avoid;margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
+.question-intro{break-inside:auto}.question-intro h3{break-after:avoid;page-break-after:avoid}.question-passage,.question-prompt{break-inside:avoid;page-break-inside:avoid;margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
 .question-prompt{border-left:3px solid #6d4cbe;background:#f7f3fc}
 .question-passage>div,.question-prompt>div{margin-top:7px;white-space:pre-wrap;line-height:1.8}
-@media print{.review-body.corrected{min-height:38mm}.review-body.feedback{min-height:30mm}}
+@media print{.review-body.corrected{min-height:18mm}.review-body.feedback{min-height:16mm}.question-detail{break-before:page;page-break-before:always}.question-detail + .question-detail{break-before:page;page-break-before:always}}
 .audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
 @media print{.notice{display:none}}
 </style>
