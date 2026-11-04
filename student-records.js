@@ -399,15 +399,21 @@ const StudentRecordsModule = (() => {
             </td>
 
             <td>
-              <button
-                class="table-action"
-                type="button"
-                data-view-session="${escapeHtml(
-                  session.id
-                )}"
-              >
-                查看
-              </button>
+              <div class="record-row-actions">
+                <button
+                  class="table-action"
+                  type="button"
+                  data-view-session="${escapeHtml(session.id)}"
+                >查看</button>
+                ${portalState?.auth?.profile?.role === "admin" ? `
+                  <button
+                    class="table-action record-archive-action"
+                    type="button"
+                    data-archive-session="${escapeHtml(session.id)}"
+                    aria-label="封存 ${escapeHtml(session.student_name_snapshot || "未填姓名")} 的測驗紀錄"
+                  >刪除</button>
+                ` : ""}
+              </div>
             </td>
 
           </tr>
@@ -428,6 +434,28 @@ const StudentRecordsModule = (() => {
           }
         );
       });
+
+    tbody.querySelectorAll("[data-archive-session]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (portalState?.auth?.profile?.role !== "admin") return;
+        const sessionId = button.dataset.archiveSession;
+        const record = state.rows.find((item) => item.session.id === sessionId);
+        if (!record) return;
+        const name = record.session.student_name_snapshot || "未填姓名";
+        if (!window.confirm(`確定封存「${name}」的這筆測驗紀錄？\n\n封存後將不再顯示於學生紀錄列表，但原始作答、錄音及成績會保留。`)) return;
+        button.disabled = true;
+        button.textContent = "處理中…";
+        try {
+          await StudentRecordsService.archiveSession(sessionId);
+          await load(true);
+        } catch (error) {
+          console.error("封存學生紀錄失敗：", error);
+          window.alert("封存失敗：" + (error?.message || "請確認 Supabase 已執行封存 SQL，且帳號具有管理員權限。"));
+          button.disabled = false;
+          button.textContent = "刪除";
+        }
+      });
+    });
   }
 
   async function load(force = false) {
