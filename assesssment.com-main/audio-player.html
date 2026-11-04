@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Aspect TOEIC｜音檔播放</title>
+<style>body{margin:0;background:#151923;color:#f8fafc;font:16px/1.6 system-ui,-apple-system,sans-serif;min-height:100vh;display:grid;place-items:center}.card{box-sizing:border-box;width:min(92vw,520px);background:#242b38;border-radius:18px;padding:26px}h1{font-size:23px;margin:0 0 12px}audio{width:100%;margin:20px 0}p{color:#d1d5db}a{color:#a5c8ff}#error{color:#ffb4b4;white-space:pre-wrap}</style>
+</head><body><main class="card"><h1>TOEIC 音檔播放</h1><p>請按下播放鍵。音檔連結有期限，逾期或撤銷後無法使用。</p><audio id="audio" controls preload="metadata" playsinline></audio><p id="error" role="alert"></p><a id="download" hidden>開啟原始音檔</a></main>
+<script>
+(function(){
+'use strict';
+const player=document.getElementById('audio'),error=document.getElementById('error'),download=document.getElementById('download');
+const token=new URLSearchParams(location.hash.slice(1)).get('token');
+if(!token||!/^[a-f0-9]{64}$/.test(token)){error.textContent='無效的音檔連結。';return;}
+const endpoint='https://dimbyiqimxypgatjmdhp.supabase.co/functions/v1/report-audio?raw=1&token='+encodeURIComponent(token);
+player.src=endpoint;download.href=endpoint;download.hidden=false;download.rel='noreferrer noopener';
+player.addEventListener('error',function(){error.textContent='音檔無法播放。可能是連結過期、錄音檔不存在，或裝置不支援原始音檔格式。請點選「開啟原始音檔」確認。';});
+})();
+</script></body></html>

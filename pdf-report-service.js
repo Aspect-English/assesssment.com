@@ -85,7 +85,7 @@ const PdfReportService = {
   },
 
   async createQrImages(links) {
-    if (!window.QRCode?.toDataURL) throw new Error("QR Code 套件載入失敗，請確認網路後重試。");
+    if (!window.QRCode?.toDataURL) throw new Error("QR Code 本機套件未載入，請重新整理網頁後再試。");
     const result = {};
     await Promise.all(Object.entries(links).map(async ([key, url]) => {
       result[key] = await window.QRCode.toDataURL(url, { width: 160, margin: 1, errorCorrectionLevel: "M" });
@@ -107,8 +107,8 @@ const PdfReportService = {
     const totalScoreText = estimatedToeicScore === null
       ? "— / 200"
       : `${estimatedToeicScore} / 200`;
-    const transcriptMap = new Map(
-      (aiAssessments || []).map((item) => [item.response_id, item.transcript || ""])
+    const assessmentMap = new Map(
+      (aiAssessments || []).map((item) => [item.response_id, item])
     );
     const teachers = [
       ...new Set(
@@ -154,7 +154,15 @@ const PdfReportService = {
           : new URL(image.replace(/^\/+/, ""), new URL("./", window.location.href)).href;
         imageHtml = `<img class="question-image" src="${this.e(url)}" alt="題目圖片"/>`;
       }
-      const transcript = transcriptMap.get(response.id) || "";
+      const assessment = assessmentMap.get(response.id) || {};
+      const originalTranscript = String(assessment.original_transcript || assessment.raw_transcript || assessment.ai_transcript || assessment.transcript || "").trim();
+      // Only a separately stored teacher revision is shown as a corrected version.
+      const correctedTranscript = String(assessment.teacher_corrected_transcript || assessment.corrected_transcript || assessment.confirmed_transcript || "").trim();
+      const transcriptHtml = response.recording_path ? `
+        <div class="review-section"><div class="review-label">01 / STUDENT'S ORIGINAL TRANSCRIPT <span>學生原始逐字稿</span></div><div class="review-body original">${this.e(originalTranscript || "尚無逐字稿")}</div></div>
+        <div class="review-section"><div class="review-label">02 / TEACHER'S CORRECTED VERSION <span>老師完整修正版</span></div><div class="review-body corrected">${this.e(correctedTranscript || "尚未提供老師完整修正版")}</div></div>
+        <div class="review-section"><div class="review-label">03 / TEACHER'S FEEDBACK <span>老師評語與建議</span></div><div class="review-body feedback">${this.e(score?.teacher_comment || "尚未提供評語")}</div></div>` : `
+        <div class="review-section"><div class="review-label">STUDENT'S RESPONSE <span>學生作答</span></div><div class="review-body original">${this.e(response.text_response || "未提供作答內容")}</div></div>`;
       const qrHtml = [
         ["question", "題目音檔 / Question Audio"],
         ["student", "學生原始錄音 / Student Recording"]
@@ -171,7 +179,7 @@ const PdfReportService = {
         ${question?.passage && question?.prompt ? `<div>${this.e(question.passage)}</div>` : ""}
         ${imageHtml}
         ${qrHtml ? `<div class="audio-qr-list">${qrHtml}</div>` : ""}
-        <div class="answer"><strong>學生作答：</strong>${this.e(response.text_response || transcript || (response.recording_path ? "已提交錄音（尚無逐字稿）" : "未提供作答內容"))}</div>
+        ${transcriptHtml}
       </section>`;
     }).join("");
 
@@ -205,7 +213,12 @@ td:first-child{width:22%}td:first-child strong,td:first-child span{display:block
 th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:last-child{width:22%;text-align:left}
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
-.question-detail{page-break-inside:avoid;break-inside:avoid;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
+.question-detail{break-inside:auto;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
+.review-section{margin:13px 0;break-inside:avoid;page-break-inside:avoid}
+.review-label{padding:7px 10px;border-left:3px solid #6d4cbe;background:#eee9f7;color:#503c7a;font-size:10px;font-weight:800}
+.review-label span{float:right;color:#756e7f;font-size:9px;font-weight:600}
+.review-body{padding:12px 14px;border:1px solid #e4dced;border-top:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.85}
+.review-body.original{background:#fbfaff}.review-body.corrected{background:#fff}.review-body.feedback{background:#f9f7fc}
 .audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
 @media print{.notice{display:none}}
 </style>
