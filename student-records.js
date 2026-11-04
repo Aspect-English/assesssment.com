@@ -833,6 +833,17 @@ const StudentRecordsModule = (() => {
                   <div class="transcript-text ${aiAssessment?.transcript ? "" : "hidden"}" data-transcript-text>
                     ${escapeHtml(aiAssessment?.transcript || "")}
                   </div>
+                  <div class="transcript-verification hidden" data-transcript-verification>
+                    <strong>第二次獨立辨識（僅供比對，不會自動合併）</strong>
+                    <div class="transcript-text" data-verification-text></div>
+                    <small data-verification-warning></small>
+                  </div>
+                  <div class="transcript-edit-wrap">
+                    <label>老師確認版逐字稿（請對照原始錄音，保留重複、語助詞與文法錯誤）</label>
+                    <textarea class="transcript-edit" rows="5" data-transcript-edit>${escapeHtml(aiAssessment?.transcript || "")}</textarea>
+                    <button type="button" class="transcript-button" data-confirm-transcript="${escapeHtml(response.id)}">儲存老師確認版</button>
+                    <small data-confirm-status>儲存後，PDF 將使用此份確認版逐字稿。再次轉錄前請先備份人工修正內容。</small>
+                  </div>
                 </div>
 
                 <div class="score-panel" data-score-panel="${escapeHtml(response.id)}">
@@ -883,6 +894,32 @@ const StudentRecordsModule = (() => {
           }
         ).join("");
 
+      list.querySelectorAll("[data-confirm-transcript]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const responseId = button.dataset.confirmTranscript;
+          const panel = button.closest("[data-transcript-panel]");
+          const editor = panel.querySelector("[data-transcript-edit]");
+          const status = panel.querySelector("[data-confirm-status]");
+          const transcript = editor.value.trim();
+          if (!transcript) { status.textContent = "逐字稿不可為空白。"; return; }
+          if (!window.confirm("確定已對照錄音，並儲存老師確認版逐字稿？")) return;
+          button.disabled = true;
+          status.textContent = "正在儲存確認版……";
+          try {
+            const assessment = await TranscriptionService.confirmTranscript(responseId, transcript);
+            const text = panel.querySelector("[data-transcript-text]");
+            text.textContent = transcript;
+            text.classList.remove("hidden");
+            aiMap.set(responseId, { ...(aiMap.get(responseId) || {}), ...assessment, transcript });
+            if (state.currentReportData) state.currentReportData.aiAssessments = [...aiMap.values()];
+            status.textContent = "已儲存老師確認版；PDF 將使用此版本。";
+          } catch (error) {
+            console.error("儲存確認版失敗", error);
+            status.textContent = `儲存失敗：${error.message || "未知錯誤"}`;
+          } finally { button.disabled = false; }
+        });
+      });
+
       list.querySelectorAll("[data-transcribe-response]").forEach((button) => {
         button.addEventListener("click", async () => {
           const responseId = button.dataset.transcribeResponse;
@@ -901,6 +938,16 @@ const StudentRecordsModule = (() => {
 
             text.textContent = result.transcript;
             text.classList.remove("hidden");
+            const editor = panel.querySelector("[data-transcript-edit]");
+            if (editor) editor.value = result.transcript;
+            const verification = panel.querySelector("[data-transcript-verification]");
+            const verificationText = panel.querySelector("[data-verification-text]");
+            const warning = panel.querySelector("[data-verification-warning]");
+            if (verification) {
+              verification.classList.toggle("hidden", !result.verificationTranscript);
+              if (verificationText) verificationText.textContent = result.verificationTranscript || "";
+              if (warning) warning.textContent = result.verificationWarning || "";
+            }
             status.className = "transcript-status completed";
             status.textContent = "逐字稿已轉換並儲存";
             button.textContent = "重新轉換";

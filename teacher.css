@@ -1756,3 +1756,11 @@ body.record-detail-open {
 .record-archive-action { color: #b42332 !important; background: #fff5f5 !important; border: 1px solid #f0c4c7 !important; }
 .record-archive-action:hover { background: #ffe7e9 !important; }
 .record-archive-action:disabled { opacity: .55; cursor: wait; }
+
+/* V7.7 strict verbatim comparison and teacher confirmation */
+.transcript-verification{margin-top:12px;padding:12px;border:1px solid #d5c8ee;border-radius:10px;background:#f8f5ff}
+.transcript-verification strong{display:block;font-size:12px;color:#523b85}
+.transcript-edit-wrap{margin-top:12px;display:grid;gap:8px}
+.transcript-edit-wrap label{font-weight:700;font-size:12px;color:#34465c}
+.transcript-edit{width:100%;min-height:115px;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:10px;font:inherit;line-height:1.65;background:#fff;color:#253046}
+.transcript-edit-wrap small,.transcript-verification small{color:#64748b;line-height:1.5}

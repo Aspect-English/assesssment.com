@@ -280,6 +280,30 @@ Deno.serve(async (req) => {
         );
       }
 
+      // 老師人工確認逐字稿：沿用同一身分驗證與 responseId 權限檢查。
+      // 不再呼叫 OpenAI，也不需要下載錄音。
+      if (body?.action === "confirm_transcript") {
+        const confirmedText = typeof body?.transcript === "string" ? body.transcript.trim() : "";
+        if (!confirmedText || confirmedText.length > 20000) {
+          return json({ error: "確認版逐字稿必須介於 1 至 20000 字元。" }, 400);
+        }
+        const { data: saved, error: saveError } = await admin
+          .from("ai_assessments")
+          .upsert({
+            session_id: record.session_id,
+            response_id: record.id,
+            question_id: record.question_id,
+            question_order: record.question_order,
+            transcript: confirmedText,
+            transcription_model: "teacher_confirmed",
+            requested_by: userId,
+            error_message: null,
+          }, { onConflict: "response_id" })
+          .select("*").single();
+        if (saveError) throw saveError;
+        return json({ transcript: confirmedText, assessment: saved, confirmed: true });
+      }
+
       responseRecord = record;
 
       console.log(

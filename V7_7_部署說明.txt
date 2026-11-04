@@ -1,0 +1,16 @@
+Aspect TOEIC SW V7.7 — 雙逐字稿對照及老師確認版
+
+1. 先備份 GitHub Repository 和 Supabase transcribe-audio/index.ts。
+2. 將本 ZIP 根目錄的網站檔案複製到 GitHub Desktop 專案根目錄（不要把外層資料夾再包一層）。不要上傳 .git 或私密金鑰。
+3. GitHub Desktop Commit to main → Push origin，等待 GitHub Pages 部署。
+4. 在 Supabase → Edge Functions → transcribe-audio → Code，將本 ZIP 中 supabase/functions/transcribe-audio/index.ts 更新並 Deploy updates。
+5. 保持 TRANSCRIPTION_SECOND_PASS=true。登入老師端 → 學生紀錄 → 查看 → 重新轉換逐字稿，應顯示第二次獨立辨識結果。
+6. 老師播放原始音檔，在「老師確認版逐字稿」輸入修正內容並按「儲存老師確認版」。此操作不呼叫 OpenAI。
+7. 重新開啟紀錄，確認修正文字仍存在；匯出 PDF 檢查逐字稿是否更新。
+
+重要限制：
+- 第二次辨識結果只在當次轉錄回傳供比對，沒有新增資料表永久儲存第二份候選稿。
+- 人工確認版儲存在 ai_assessments.transcript；再次重新轉錄會覆蓋人工確認版，請先備份。
+- 若錄音播放器顯示 0:00，需另查 WebM 時長 metadata / 播放 URL；本版未聲稱已修正該問題。
+- 本版未加入音檔 QR Code：學生錄音需先設計具權限驗證的長期播放連結，避免 PDF 外流導致錄音公開。
+- 本版只做靜態 JavaScript 語法與 ZIP 完整性檢查，尚未在正式 Supabase 測試。
