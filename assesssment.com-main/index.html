@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <title>多益口說寫作程度檢測</title>
+
+  <meta name="theme-color" content="#195a41">
+  <meta name="application-name" content="TOEIC SW">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TOEIC SW">
+
+  <link
+    rel="manifest"
+    href="./manifest.webmanifest?v=github-pages-v7"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="./icon-192.png"
+  >
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css?v=5.0.5-desktop-fit">
+  <link rel="stylesheet" href="style-writing.css?v=7.3.0">
+</head>
+
+<body>
+
+  <main class="app-container">
+
+    <!-- 首頁 -->
+    <section id="startPage" class="page active">
+
+      <div class="card">
+
+        <div class="brand">
+          <p class="brand-en">ASPECT ENGLISH</p>
+
+          <h1>多益口說寫作程度檢測</h1>
+
+          <p class="subtitle">
+            TOEIC Speaking & Writing Placement Test
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="studentName">學生姓名</label>
+
+          <input
+            id="studentName"
+            type="text"
+            placeholder="請輸入學生姓名"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="testType">測驗類型</label>
+
+          <select id="testType">
+            <option value="">請選擇測驗類型</option>
+
+            <option value="quick">
+              口說寫作快速程度檢測
+            </option>
+
+            <option value="speaking">
+              多益口說完整模擬
+            </option>
+
+            <option value="writing">
+              多益寫作完整模擬
+            </option>
+
+            <option value="full">
+              多益口說寫作完整模擬
+            </option>
+          </select>
+        </div>
+
+        <div id="startError" class="error-message"></div>
+
+        <button
+          id="startButton"
+          class="primary-button"
+          type="button"
+        >
+          進入設備測試
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- 耳機測試頁 -->
+    <section id="speakerPage" class="page">
+
+      <div class="card">
+
+        <div class="step-label">
+          設備測試 1／2
+        </div>
+
+        <h2>耳機聲音測試</h2>
+
+        <p class="instruction">
+          請戴上耳機，系統會自動播放測試聲音，請確認是否能清楚聽見。
+        </p>
+
+        <div class="test-box">
+
+          <div class="device-icon">🎧</div>
+
+          <button
+            id="playSpeakerTestButton"
+            class="secondary-button hidden"
+            type="button"
+          >
+            重新播放測試聲音
+          </button>
+
+          <p id="speakerStatus" class="status-text">
+            尚未播放測試聲音
+          </p>
+
+        </div>
+
+        <div class="button-row">
+
+          <button
+            id="speakerRetryButton"
+            class="outline-button"
+            type="button"
+          >
+            聽不到聲音
+          </button>
+
+          <button
+            id="speakerPassButton"
+            class="primary-button"
+            type="button"
+            disabled
+          >
+            聽得清楚，下一步
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- 麥克風測試頁 -->
+    <section id="microphonePage" class="page">
+
+      <div class="card">
+
+        <div class="step-label">
+          設備測試 2／2
+        </div>
+
+        <h2>麥克風測試</h2>
+
+        <p class="instruction">
+          按下開始錄音，聽到提示音後，請朗讀以下句子。
+        </p>
+
+        <div class="reading-box">
+          I am testing the microphone for my speaking test.
+        </div>
+
+        <div class="volume-area">
+
+          <div class="volume-label">
+            麥克風音量
+          </div>
+
+          <div class="volume-track">
+            <div id="volumeBar" class="volume-bar"></div>
+          </div>
+
+          <div id="volumeText" class="volume-text">
+            尚未偵測
+          </div>
+
+        </div>
+
+        <div class="test-box">
+
+          <div
+            id="recordingIndicator"
+            class="recording-indicator"
+          >
+            <span class="recording-dot"></span>
+
+            <span id="recordingText">
+              尚未錄音
+            </span>
+          </div>
+
+          <button
+            id="startRecordingButton"
+            class="secondary-button"
+            type="button"
+          >
+            開始錄音測試
+          </button>
+
+          <audio
+            id="recordingPlayback"
+            controls
+            class="audio-player hidden"
+          ></audio>
+
+        </div>
+
+        <div
+          id="microphoneError"
+          class="error-message"
+        ></div>
+
+        <div class="button-row">
+
+          <button
+            id="recordAgainButton"
+            class="outline-button"
+            type="button"
+            disabled
+          >
+            重新錄音
+          </button>
+            <button
+              id="microphoneHelpButton"
+              class="secondary-button"
+              type="button"
+            >
+              麥克風沒聲音
+            </button>
+
+          <button
+            id="microphonePassButton"
+            class="primary-button"
+            type="button"
+            disabled
+          >
+            聲音清楚，完成測試
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- 設備測試完成頁 -->
+    <section id="readyPage" class="page">
+
+      <div class="card center-card">
+
+        <div class="success-icon">✓</div>
+
+        <h2>設備測試完成</h2>
+
+        <p class="instruction">
+          耳機與麥克風皆已完成測試。
+        </p>
+
+        <div class="student-summary">
+
+          <div>
+            <span>學生姓名</span>
+            <strong id="summaryName"></strong>
+          </div>
+
+          <div>
+            <span>測驗編號</span>
+            <strong id="summaryTestId"></strong>
+          </div>
+
+          <div>
+            <span>測驗類型</span>
+            <strong id="summaryTestType"></strong>
+          </div>
+
+        </div>
+
+        <button
+          id="continueButton"
+          class="primary-button"
+          type="button"
+        >
+          進入測驗說明
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- 測驗說明頁 -->
+    <section id="instructionsPage" class="page">
+
+      <div class="card">
+
+        <div class="step-label">
+          測驗說明
+        </div>
+
+        <h2 id="instructionsTitle">Speaking Test Instructions</h2>
+
+        <div id="instructionList" class="instruction-list">
+
+          <div class="instruction-item">
+
+            <span class="instruction-number">
+              1
+            </span>
+
+            <div>
+              <strong>請全程配戴耳機</strong>
+
+              <p>
+                測驗進行時，請勿取下耳機或調整設備。
+              </p>
+            </div>
+
+          </div>
+
+          <div class="instruction-item">
+
+            <span class="instruction-number">
+              2
+            </span>
+
+            <div>
+              <strong>請留意右上角倒數時間</strong>
+
+              <p>
+                畫面會顯示準備時間與回答時間。
+              </p>
+            </div>
+
+          </div>
+
+          <div class="instruction-item">
+
+            <span class="instruction-number">
+              3
+            </span>
+
+            <div>
+              <strong>聽到提示音後開始回答</strong>
+
+              <p>
+                系統會自動開始錄音，不需要按下任何按鈕。
+              </p>
+            </div>
+
+          </div>
+
+          <div class="instruction-item">
+
+            <span class="instruction-number">
+              4
+            </span>
+
+            <div>
+              <strong>時間到後會自動停止</strong>
+
+              <p>
+                請勿重新整理、關閉網頁或返回上一頁。
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="direction-test-box">
+
+          <p id="directionStatus">
+            請先播放測驗說明音檔。
+          </p>
+
+          <button
+            id="playDirectionButton"
+            class="secondary-button"
+            type="button"
+          >
+            播放英文測驗說明
+          </button>
+
+        </div>
+
+        <button
+          id="beginTestButton"
+          class="primary-button"
+          type="button"
+          disabled
+        >
+          開始測驗
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- 口說題目頁：整合版 ETS 風格 -->
+    <section id="speakingPage" class="page">
+
+      <div class="assessment-shell">
+
+        <div class="assessment-window">
+
+          <header class="assessment-header">
+
+            <div class="assessment-brand">
+              TOEIC Speaking
+            </div>
+
+            <div id="assessmentQuestionCounter" class="assessment-counter">
+              Question 1 of 11
+            </div>
+
+          </header>
+
+          <div class="assessment-body">
+
+            <div class="assessment-meta">
+              <span id="assessmentPartLabel">Part 1</span>
+              <span id="assessmentQuestionType">Read a text aloud</span>
+            </div>
+
+            <div id="assessmentPromptArea" class="assessment-prompt-area">
+
+              <div
+                id="assessmentPromptText"
+                class="assessment-prompt-text"
+              ></div>
+
+              <img
+                id="assessmentPromptImage"
+                class="assessment-prompt-image hidden"
+                alt="題目圖片"
+              >
+
+              <div
+                id="assessmentAudioPrompt"
+                class="assessment-audio-prompt hidden"
+              >
+                <div class="assessment-audio-icon">🔊</div>
+                <div id="assessmentAudioStatus">
+                  Listen to the question.
+                </div>
+              </div>
+
+              <div
+                id="assessmentInformationCard"
+                class="assessment-information-card hidden"
+              ></div>
+
+            </div>
+
+            <div class="assessment-timers">
+
+              <section
+                id="preparationTimerCard"
+                class="assessment-timer-card"
+              >
+                <div class="assessment-timer-label">
+                  Preparation Time
+                </div>
+
+                <div
+                  id="preparationTimerValue"
+                  class="assessment-timer-value"
+                >
+                  00:00
+                </div>
+              </section>
+
+              <section
+                id="responseTimerCard"
+                class="assessment-timer-card"
+              >
+                <div class="assessment-timer-label">
+                  Response Time
+                </div>
+
+                <div
+                  id="responseTimerValue"
+                  class="assessment-timer-value"
+                >
+                  00:00
+                </div>
+              </section>
+
+            </div>
+
+            <div class="assessment-status-row">
+
+              <span
+                id="assessmentRecordingDot"
+                class="assessment-recording-dot"
+              ></span>
+
+              <span id="assessmentStageText">
+                Ready
+              </span>
+
+            </div>
+
+            <div class="hidden" aria-hidden="true">
+              <div id="assessmentProgressValue"></div>
+            </div>
+
+            <!-- 保留舊版 JS 所需節點，避免其他模組報錯 -->
+            <div class="hidden">
+              <span id="stageLabel"></span>
+              <strong id="questionTimer"></strong>
+              <div id="questionStatus"></div>
+              <div id="formalRecordingIndicator">
+                <span class="recording-dot"></span>
+                <span id="formalRecordingText"></span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Writing 開始頁 -->
+    <section id="writingStartPage" class="page">
+      <div class="writing-interstitial-shell">
+        <div class="writing-interstitial-window">
+          <header class="writing-interstitial-header"><strong>TOEIC Writing</strong></header>
+          <div class="writing-interstitial-content">
+            <h1>Writing Test</h1>
+            <p>You will now start the Writing section.</p>
+            <div class="writing-start-summary">
+              <p><strong>Questions 1–5:</strong> Write a sentence based on a picture — 8 minutes</p>
+              <p><strong>Questions 6–7:</strong> Respond to a written request — 20 minutes total</p>
+              <p><strong>Question 8:</strong> Write an opinion essay — 30 minutes</p>
+            </div>
+            <p class="writing-interstitial-note">Click Continue to read the directions for Questions 1–5.</p>
+            <button id="writingStartContinueButton" class="writing-interstitial-button" type="button">Continue</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Writing Part Directions 頁 -->
+    <section id="writingDirectionsPage" class="page">
+      <div class="writing-interstitial-shell">
+        <div class="writing-interstitial-window">
+          <header class="writing-interstitial-header">
+            <strong>TOEIC Writing</strong>
+            <button id="writingDirectionsContinueButton" class="writing-header-continue" type="button">Continue</button>
+          </header>
+          <div class="writing-interstitial-content writing-directions-screen">
+            <h1 id="writingDirectionsScreenTitle">Writing Directions</h1>
+            <div id="writingDirectionsScreenText" class="writing-directions-screen-text"></div>
+            <p class="writing-interstitial-note">Click <strong>Continue</strong> to go on.</p>
+            <button id="writingDirectionsContinueButtonBottom" class="writing-interstitial-button" type="button">Continue</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 寫作題目頁 -->
+    <section id="writingPage" class="page">
+      <div class="writing-test-shell">
+        <div class="writing-test-window">
+          <header class="writing-test-header">
+            <div class="writing-test-brand">TOEIC Writing</div>
+            <div id="writingQuestionCounter" class="writing-question-counter">Question 1</div>
+            <div id="writingMainTimer" class="writing-main-timer">00:00</div>
+          </header>
+
+          <div class="writing-test-body">
+            <section class="writing-question-panel">
+              <div id="writingDirections" class="writing-directions">
+                Directions will appear here.
+              </div>
+              <div id="writingQuestionContent" class="writing-question-content"></div>
+              <img
+                id="writingQuestionImage"
+                class="writing-question-image hidden"
+                alt="Writing question"
+              >
+            </section>
+
+            <section class="writing-answer-panel">
+              <div
+                id="writingSecurityNotice"
+                class="writing-security-notice hidden"
+                role="status"
+                aria-live="polite"
+              >
+                測驗進行中：僅可輸入英文字母與英文標點；禁止右鍵、複製、剪下、貼上及切換視窗。
+              </div>
+
+              <div class="writing-toolbar">
+                <div class="writing-toolbar-left">
+                  <button id="writingCutButton" type="button" class="writing-tool-button">Cut</button>
+                  <button id="writingPasteButton" type="button" class="writing-tool-button">Paste</button>
+                  <button id="writingUndoButton" type="button" class="writing-tool-button">Undo</button>
+                  <button id="writingRedoButton" type="button" class="writing-tool-button">Redo</button>
+                </div>
+
+                <div class="writing-toolbar-right">
+                  <button
+                    id="writingWordCountToggle"
+                    type="button"
+                    class="writing-tool-button"
+                  >
+                    Hide Word Count
+                  </button>
+                  <span id="writingWordCount" class="writing-word-count">0</span>
+                </div>
+              </div>
+
+              <textarea
+                id="writingAnswer"
+                class="writing-answer"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+              ></textarea>
+
+              <div class="writing-navigation">
+                <button
+                  id="writingNextButton"
+                  type="button"
+                  class="writing-next-button"
+                >
+                  Next
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- 測驗完成頁 -->
+    <section id="completedPage" class="page">
+
+      <div class="card center-card">
+
+        <div class="success-icon">✓</div>
+
+        <h2>測驗完成</h2>
+
+        <p class="instruction">
+          您的作答已成功送出。
+        </p>
+
+        <div class="student-summary">
+
+          <div>
+            <span>學生姓名</span>
+
+            <strong id="completedStudentName"></strong>
+          </div>
+
+          <div>
+            <span>測驗編號</span>
+
+            <strong id="completedTestId"></strong>
+          </div>
+
+        </div>
+
+        <!-- 保留相容節點，不在完成頁顯示錄音資訊 -->
+        <div class="hidden" aria-hidden="true">
+          <strong id="completedRecordingStatus">已完成</strong>
+          <audio
+            id="finalRecordingPlayback"
+          ></audio>
+        </div>
+
+        <button
+          id="restartTestButton"
+          class="outline-button restart-button"
+          type="button"
+        >
+          返回首頁
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <div
+    id="deviceHelpBackdrop"
+    class="device-help-backdrop hidden"
+  >
+    <section
+      class="device-help-modal"
+      aria-labelledby="deviceHelpTitle"
+      role="dialog"
+      aria-modal="true"
+    >
+      <header class="device-help-header">
+        <div>
+          <span class="device-help-chip">
+            DEVICE CHECK
+          </span>
+
+          <h2 id="deviceHelpTitle">
+            請確認您的裝置
+          </h2>
+
+          <p id="deviceHelpSubtitle">
+            依照以下步驟檢查後，再重新測試。
+          </p>
+        </div>
+
+        <button
+          id="closeDeviceHelpButton"
+          class="device-help-close"
+          type="button"
+          aria-label="關閉裝置檢查"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="device-help-body">
+
+        <div
+          id="deviceHelpWarning"
+          class="device-help-warning"
+        >
+          測驗開始後將使用目前瀏覽器選擇的耳機與麥克風。
+        </div>
+
+        <ol
+          id="deviceHelpSteps"
+          class="device-help-steps"
+        ></ol>
+
+        <div
+          id="detectedDevicesPanel"
+          class="detected-devices-panel"
+        >
+          <div>
+            <span>目前音訊輸出</span>
+            <strong id="detectedSpeakerName">
+              無法直接偵測，請確認 Windows 音訊輸出
+            </strong>
+          </div>
+
+          <div>
+            <span>目前可用麥克風</span>
+            <strong id="detectedMicrophoneName">
+              正在檢查……
+            </strong>
+          </div>
+        </div>
+
+        <p class="device-help-note">
+          若使用藍牙耳機，請確認裝置已完成配對，並將瀏覽器的音訊輸入與輸出都切換到同一副耳機。
+        </p>
+      </div>
+
+      <footer class="device-help-actions">
+        <button
+          id="deviceHelpCancelButton"
+          class="device-help-secondary"
+          type="button"
+        >
+          返回檢查
+        </button>
+
+        <button
+          id="retryDeviceTestButton"
+          class="device-help-primary"
+          type="button"
+        >
+          已確認，重新測試
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="config.js"></script>
+<script src="supabase-service.js"></script>
+
+<script src="utils.js"></script>
+<script src="session.js"></script>
+<script src="recorder.js"></script>
+<script src="upload.js"></script>
+<script src="response.js"></script>
+<script src="question-config.js"></script>
+<script src="test-service.js"></script>
+<script src="assessment-settings.js?v=3.5.6"></script>
+<script src="question-service.js?v=5.0.3-direction-required"></script>
+<script src="audio-cues.js?v=5.0.3-direction-required"></script>
+<script src="assessment-engine.js?v=5.3.9"></script>
+<script src="app.js?v=github-pages-v7"></script>
+<script src="pwa-register.js?v=github-pages-v7"></script>
+
+</body>
+
+</html>

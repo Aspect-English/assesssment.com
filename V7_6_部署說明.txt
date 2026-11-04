@@ -1,0 +1,11 @@
+Aspect TOEIC SW V7.6 — Strict Verbatim 逐字轉錄
+
+1. GitHub Desktop：將 assesssment.com-main 內網站檔案覆蓋現有 repo，同步 Commit/Push。
+2. Supabase → Edge Functions → transcribe-audio → Code：備份舊 index.ts，貼上 supabase/functions/transcribe-audio/index.ts，Deploy updates。
+3. Supabase → Edge Functions → Secrets：設定 TRANSCRIPTION_SECOND_PASS=true（第二次辨識會增加 API 成本）。
+4. 老師端重新登入 → 學生紀錄 → 查看 → 重新轉換逐字稿；同一題會顯示第二次辨識供核對。
+5. 僅主要辨識結果會儲存至 ai_assessments；第二次結果只在本次頁面顯示，重新整理即消失。先備份原逐字稿。
+
+重要：語音辨識無法保證100%無誤。重複語句、口音、低音量與尾端可能仍漏辨，必須播放原音人工核對。
+本版沒有實作人工校正的資料庫儲存，也沒有實作 PDF 音檔 QR Code。
+本版沒有修改學生錄音計時與截斷機制。
