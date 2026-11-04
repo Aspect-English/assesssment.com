@@ -177,7 +177,8 @@ const PdfReportService = {
         <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
         <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
         ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
-        ${question?.passage && question?.prompt ? `<div>${this.e(question.passage)}</div>` : ""}
+        ${question?.passage ? `<div class="question-passage"><strong>題目閱讀資料 / Source Material：</strong><div>${this.e(question.passage)}</div></div>` : ""}
+        ${question?.prompt ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>${this.e(question.prompt)}</div></div>` : (!question?.passage ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>此題尚未儲存題目內文，請於老師題庫確認。</div></div>` : "")}
         ${imageHtml}
         ${qrHtml ? `<div class="audio-qr-list">${qrHtml}</div>` : ""}
         ${transcriptHtml}
@@ -219,7 +220,11 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 .review-label{padding:7px 10px;border-left:3px solid #6d4cbe;background:#eee9f7;color:#503c7a;font-size:10px;font-weight:800}
 .review-label span{float:right;color:#756e7f;font-size:9px;font-weight:600}
 .review-body{padding:12px 14px;border:1px solid #e4dced;border-top:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.85}
-.review-body.original{background:#fbfaff}.review-body.corrected{background:#fff}.review-body.feedback{background:#f9f7fc}
+.review-body.original{background:#fbfaff}.review-body.corrected{background:#fff;min-height:145px}.review-body.feedback{background:#f9f7fc;min-height:115px}
+.question-passage,.question-prompt{margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
+.question-prompt{border-left:3px solid #6d4cbe;background:#f7f3fc}
+.question-passage>div,.question-prompt>div{margin-top:7px;white-space:pre-wrap;line-height:1.8}
+@media print{.review-body.corrected{min-height:38mm}.review-body.feedback{min-height:30mm}}
 .audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
 @media print{.notice{display:none}}
 </style>
