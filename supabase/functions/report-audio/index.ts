@@ -1,0 +1,73 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
+const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+const bytesToHex = (bytes: Uint8Array) => Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+async function digest(token: string) { return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)))); }
+
+Deno.serve(async req => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  try {
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!url || !anon || !service) return reply({ error: "Supabase secrets missing" }, 500);
+    const admin = createClient(url, service);
+    if (req.method === "POST") {
+      const auth = req.headers.get("Authorization") || "";
+      if (!auth.startsWith("Bearer ")) return reply({ error: "Teacher authentication required" }, 401);
+      const userClient = createClient(url, anon, { global: { headers: { Authorization: auth } } });
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      if (authError || !user) return reply({ error: "Invalid teacher session" }, 401);
+      const { data: profile } = await admin.from("profiles").select("role,status").eq("id", user.id).maybeSingle();
+      if (profile?.status !== "active" || !["teacher", "admin"].includes(profile.role)) return reply({ error: "Teacher access required" }, 403);
+      const body = await req.json();
+      if (!Array.isArray(body.items) || body.items.length > 60) return reply({ error: "Invalid items" }, 400);
+      const links: Record<string, string> = {};
+      const base = `${url}/functions/v1/report-audio`;
+      for (const item of body.items) {
+        if (!item || !["student", "question"].includes(item.kind) || typeof item.responseId !== "string") continue;
+        const { data: response } = await admin.from("responses").select("id,question_id,recording_bucket,recording_path").eq("id", item.responseId).maybeSingle();
+        if (!response) continue;
+        let bucket: string | null = null, path: string | null = null, publicUrl: string | null = null;
+        if (item.kind === "student") {
+          bucket = response.recording_bucket || "speaking-recordings";
+          path = response.recording_path;
+          if (!path) continue;
+        } else {
+          if (!response.question_id) continue;
+          const { data: question } = await admin.from("question_bank").select("audio_url").eq("id", response.question_id).maybeSingle();
+          if (!question?.audio_url) continue;
+          const raw = String(question.audio_url);
+          // Only permit HTTPS URLs from this project's Supabase Storage or its configured public site.
+          let parsed: URL;
+          try { parsed = new URL(raw); } catch { continue; }
+          const allowed = [new URL(url).hostname, "aspect-english.github.io"];
+          if (parsed.protocol !== "https:" || !allowed.includes(parsed.hostname)) continue;
+          publicUrl = parsed.href;
+        }
+        const token = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+        const tokenHash = await digest(token);
+        const expiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+        const { error } = await admin.from("report_audio_links").insert({ token_hash: tokenHash, response_id: response.id, kind: item.kind, bucket, object_path: path, public_url: publicUrl, expires_at: expiresAt, created_by: user.id });
+        if (error) throw error;
+        links[`${response.id}:${item.kind}`] = `${base}?token=${token}`;
+      }
+      return reply({ links });
+    }
+    if (req.method !== "GET") return reply({ error: "Method not allowed" }, 405);
+    const token = new URL(req.url).searchParams.get("token") || "";
+    if (!/^[a-f0-9]{64}$/.test(token)) return reply({ error: "Invalid link" }, 400);
+    const { data: link } = await admin.from("report_audio_links").select("kind,bucket,object_path,public_url,expires_at,revoked_at").eq("token_hash", await digest(token)).maybeSingle();
+    if (!link || link.revoked_at || Date.parse(link.expires_at) <= Date.now()) return reply({ error: "音檔連結已過期或被撤銷" }, 410);
+    if (link.public_url) {
+      const parsed = new URL(link.public_url);
+      if (parsed.protocol !== "https:" || ![new URL(url).hostname, "aspect-english.github.io"].includes(parsed.hostname)) return reply({ error: "Invalid audio host" }, 403);
+      return Response.redirect(parsed.href, 302);
+    }
+    if (!link.bucket || !link.object_path) return reply({ error: "Audio not found" }, 404);
+    const { data: audio, error } = await admin.storage.from(link.bucket).download(link.object_path);
+    if (error || !audio) return reply({ error: "Audio unavailable" }, 404);
+    return new Response(audio.stream(), { status: 200, headers: { ...cors, "Content-Type": audio.type || "audio/webm", "Content-Disposition": "inline", "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+  } catch (e) { console.error("report-audio error", e); return reply({ error: e instanceof Error ? e.message : "Unexpected error" }, 500); }
+});

@@ -1225,13 +1225,15 @@ const StudentRecordsModule = (() => {
     $("exportStudentReportButton")
       .addEventListener(
         "click",
-        () => {
+        async () => {
           if (!state.currentReportData) {
             return;
           }
 
+          const button = $("exportStudentReportButton");
+          button.disabled = true;
           try {
-            PdfReportService.export(
+            await PdfReportService.export(
               state.currentReportData
             );
           } catch (error) {
@@ -1244,7 +1246,7 @@ const StudentRecordsModule = (() => {
               error.message ||
               "無法開啟 PDF 報告。"
             );
-          }
+          } finally { button.disabled = false; }
         }
       );
 

@@ -62,7 +62,38 @@ const PdfReportService = {
     return Math.round((((bounded / 5) * 200) / 10)) * 10;
   },
 
-  build({ session, responses, questions, scores, aiAssessments = [] }) {
+  async createAudioLinks({ responses, questions }) {
+    const endpoint = `${SUPABASE_CONFIG.url}/functions/v1/report-audio`;
+    const session = (await supabaseClient.auth.getSession()).data.session;
+    if (!session?.access_token) throw new Error("請先重新登入老師端，再匯出含音檔的成績單。");
+    const items = [];
+    const qMap = new Map(questions.map(q => [q.id, q]));
+    for (const r of responses) {
+      if (r.recording_path) items.push({ key: `${r.id}:student`, kind: "student", responseId: r.id });
+      const q = qMap.get(r.question_id);
+      if (q?.audio_url) items.push({ key: `${r.id}:question`, kind: "question", responseId: r.id });
+    }
+    if (!items.length) return {};
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}`, "apikey": SUPABASE_CONFIG.publishableKey },
+      body: JSON.stringify({ items })
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `音檔 QR Code 產生失敗 (${res.status})`);
+    return body.links || {};
+  },
+
+  async createQrImages(links) {
+    if (!window.QRCode?.toDataURL) throw new Error("QR Code 套件載入失敗，請確認網路後重試。");
+    const result = {};
+    await Promise.all(Object.entries(links).map(async ([key, url]) => {
+      result[key] = await window.QRCode.toDataURL(url, { width: 160, margin: 1, errorCorrectionLevel: "M" });
+    }));
+    return result;
+  },
+
+  build({ session, responses, questions, scores, aiAssessments = [], audioQrImages = {}, audioLinks = {} }) {
     const qMap = new Map(
       questions.map((question) => [question.id, question])
     );
@@ -124,12 +155,22 @@ const PdfReportService = {
         imageHtml = `<img class="question-image" src="${this.e(url)}" alt="題目圖片"/>`;
       }
       const transcript = transcriptMap.get(response.id) || "";
+      const qrHtml = [
+        ["question", "題目音檔 / Question Audio"],
+        ["student", "學生原始錄音 / Student Recording"]
+      ].map(([kind, label]) => {
+        const key = `${response.id}:${kind}`;
+        const img = audioQrImages[key];
+        const link = audioLinks[key];
+        return img && link ? `<div class="audio-qr"><img src="${this.e(img)}" alt="${this.e(label)} QR Code"/><strong>${this.e(label)}</strong><small>掃描播放 · 30 天內有效</small><a href="${this.e(link)}">開啟音檔</a></div>` : "";
+      }).join("");
       return `<section class="question-detail">
         <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
         <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
         ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
         ${question?.passage && question?.prompt ? `<div>${this.e(question.passage)}</div>` : ""}
         ${imageHtml}
+        ${qrHtml ? `<div class="audio-qr-list">${qrHtml}</div>` : ""}
         <div class="answer"><strong>學生作答：</strong>${this.e(response.text_response || transcript || (response.recording_path ? "已提交錄音（尚無逐字稿）" : "未提供作答內容"))}</div>
       </section>`;
     }).join("");
@@ -165,6 +206,7 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
 .question-detail{page-break-inside:avoid;break-inside:avoid;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
+.audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
 @media print{.notice{display:none}}
 </style>
 </head>
@@ -213,13 +255,21 @@ ${questionDetails}
 </html>`;
   },
 
-  export(data) {
+  async export(data) {
     const reportWindow = window.open("", "_blank");
     if (!reportWindow) {
       throw new Error("瀏覽器封鎖了報告視窗，請允許彈出式視窗。");
     }
-    reportWindow.document.open();
-    reportWindow.document.write(this.build(data));
-    reportWindow.document.close();
+    reportWindow.document.write("<p style=\"font-family:sans-serif;padding:24px\">正在建立安全音檔連結與 QR Code，請稍候…</p>");
+    try {
+      const audioLinks = await this.createAudioLinks(data);
+      const audioQrImages = await this.createQrImages(audioLinks);
+      reportWindow.document.open();
+      reportWindow.document.write(this.build({ ...data, audioLinks, audioQrImages }));
+      reportWindow.document.close();
+    } catch (error) {
+      reportWindow.close();
+      throw error;
+    }
   }
 };
