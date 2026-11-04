@@ -161,8 +161,8 @@ const PdfReportService = {
       const correctedTranscript = String(assessment.teacher_corrected_transcript || assessment.corrected_transcript || assessment.confirmed_transcript || "").trim();
       const transcriptHtml = response.recording_path ? `
         <div class="review-section"><div class="review-label">01 / STUDENT'S ORIGINAL TRANSCRIPT <span>學生原始逐字稿</span></div><div class="review-body original">${this.e(originalTranscript || "尚無逐字稿")}</div></div>
-        <div class="review-section"><div class="review-label">02 / TEACHER'S CORRECTED VERSION <span>老師完整修正版</span></div><div class="review-body corrected">${this.e(correctedTranscript || "尚未提供老師完整修正版")}</div></div>
-        <div class="review-section"><div class="review-label">03 / TEACHER'S FEEDBACK <span>老師評語與建議</span></div><div class="review-body feedback">${this.e(score?.teacher_comment || "尚未提供評語")}</div></div>` : `
+        <div class="review-section"><div class="review-label">02 / TEACHER'S CORRECTED VERSION <span>老師完整修正版</span></div><div class="review-body corrected">${this.e(correctedTranscript || "")}</div></div>
+        <div class="review-section"><div class="review-label">03 / TEACHER'S FEEDBACK <span>老師評語與建議</span></div><div class="review-body feedback">${this.e(score?.teacher_comment || "")}</div></div>` : `
         <div class="review-section"><div class="review-label">STUDENT'S RESPONSE <span>學生作答</span></div><div class="review-body original">${this.e(response.text_response || "未提供作答內容")}</div></div>`;
       const qrHtml = [
         ["question", "題目音檔 / Question Audio"],
