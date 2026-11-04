@@ -85,7 +85,7 @@ const PdfReportService = {
   },
 
   async createQrImages(links) {
-    if (!window.QRCode?.toDataURL) throw new Error("QR Code 套件載入失敗，請確認網路後重試。");
+    if (!window.QRCode?.toDataURL) throw new Error("QR Code 本機套件未載入，請重新整理網頁後再試。");
     const result = {};
     await Promise.all(Object.entries(links).map(async ([key, url]) => {
       result[key] = await window.QRCode.toDataURL(url, { width: 160, margin: 1, errorCorrectionLevel: "M" });
