@@ -225,3 +225,24 @@
   .writing-test-shell { min-height: 100dvh; }
   .writing-answer { min-height: clamp(220px, 40dvh, 620px); }
 }
+
+/* Writing viewport fix: timer and Next always visible. */
+#writingPage.active .writing-test-shell{height:100dvh;min-height:0;padding:clamp(4px,1vh,12px);overflow:hidden;box-sizing:border-box}
+#writingPage.active .writing-test-window{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#writingPage.active .writing-test-header{flex:0 0 auto;min-height:54px;padding:8px clamp(10px,2vw,28px);gap:8px;z-index:2}
+#writingPage.active .writing-main-timer{min-width:82px;padding:7px 9px;font-size:clamp(16px,2vw,22px)}
+#writingPage.active .writing-test-body{flex:1 1 auto;height:auto;min-height:0;overflow:hidden}
+#writingPage.active .writing-question-panel{min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#writingPage.active .writing-answer-panel{min-height:0;overflow:hidden}
+#writingPage.active .writing-toolbar{flex:0 0 auto}
+#writingPage.active .writing-answer{flex:1 1 auto;height:0;min-height:0;overflow-y:auto}
+#writingPage.active .writing-navigation{flex:0 0 auto;position:relative;z-index:3;padding:8px 14px;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+@media(max-width:900px){
+ #writingPage.active .writing-test-body{display:flex;flex-direction:column}
+ #writingPage.active .writing-question-panel{flex:0 1 35%;min-height:75px;padding:10px 14px}
+ #writingPage.active .writing-answer-panel{flex:1 1 65%}
+ #writingPage.active .writing-toolbar{padding:6px 8px;gap:5px}
+ #writingPage.active .writing-tool-button{min-height:30px;padding:5px 8px;font-size:12px}
+ #writingPage.active .writing-answer{padding:10px 12px;font-size:16px}
+}
+@media(max-height:650px){#writingPage.active .writing-test-header{min-height:46px}#writingPage.active .writing-navigation{padding-top:4px;padding-bottom:4px}#writingPage.active .writing-next-button{min-height:36px}}
