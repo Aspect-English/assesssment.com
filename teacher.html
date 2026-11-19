@@ -15,10 +15,8 @@
     type="image/svg+xml"
   >
 
-  <link
-    rel="stylesheet"
-    href="teacher.css?v=7.3.0"
-  >
+  <link rel="stylesheet" href="teacher.css?v=7.3.0">
+  <link rel="stylesheet" href="homework-management.css?v=8.0.2">
 </head>
 
 <body class="auth-checking">
@@ -93,6 +91,7 @@
           測驗管理
         </button>
 
+        <button class="nav-item" data-section="homework" type="button"><span>▦</span> 作業管理 <small style="font-size:10px;opacity:.75">V8.0.2</small></button>
         <button
           class="nav-item"
           data-section="students"
@@ -642,6 +641,15 @@
 
       </section>
 
+
+      <section id="homeworkSection" class="portal-section">
+        <div class="hw-wrap">
+          <h2>口說寫作作業管理 <span class="hw-tag">V8.0.2 設定草稿</span></h2>
+          <p class="hw-notice">目前僅供老師編排 15 組作業規則，設定儲存在本機瀏覽器，不會同步 Supabase、指派學生或發布作業。請勿在共用電腦儲存敏感資料。</p>
+          <div class="hw-actions"><button type="button" id="hwExport">匯出 15 組設定 JSON</button><label class="hw-import">匯入設定 JSON<input id="hwImport" type="file" accept="application/json,.json" hidden></label><button type="button" id="hwReset">重設為完整模擬考題數</button></div>
+          <div class="hw-grid"><aside class="hw-list" id="hwSetList" aria-label="15 組作業"></aside><div class="hw-editor"><h3 id="hwCurrentTitle">Homework 01</h3><label>作業名稱<input id="hwTitle" maxlength="100" type="text"></label><label>備註<textarea id="hwNotes" rows="2" maxlength="1000"></textarea></label><p>各 Part 題數（0 表示暫不配置；發布前每個 Part 至少 1 題）</p><div id="hwRules"></div><div class="hw-summary" id="hwSummary"></div><button type="button" id="hwSave">儲存本機草稿</button><span id="hwMessage" role="status"></span></div></div>
+        </div>
+      </section>
       <section
         id="studentsSection"
         class="portal-section"
@@ -1442,14 +1450,16 @@
   <script src="test-builder-service.js?v=5.4.7"></script>
 
   <!-- Student Records must load before teacher.js -->
-  <script src="student-records-service.js?v=7.3.0"></script>
-  <script src="pdf-report-service.js?v=7.3.0"></script>
+  <script src="student-records-service.js?v=7.8.0"></script>
+  <script src="qr-code-local.js?v=7.8.1"></script>
+  <script src="pdf-report-service.js?v=7.8.1"></script>
   <script src="teacher-scoring-service.js?v=5.6.0"></script>
   <script src="ai-scoring-service.js?v=5.0.1"></script>
-  <script src="student-records.js?v=7.6.0"></script>
+  <script src="student-records.js?v=7.8.0"></script>
 
   <script src="dashboard-service.js?v=5.0.1"></script>
   <script src="teacher.js?v=5.0.7-part3-group-edit"></script>
+  <script src="homework-management.js?v=8.0.2"></script>
   <script src="transcription-service.js?v=5.6.0"></script>
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
