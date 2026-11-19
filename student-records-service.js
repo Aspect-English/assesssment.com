@@ -143,8 +143,7 @@ const StudentRecordsService = {
             "prompt",
             "passage",
             "image_url",
-            "directions",
-            "audio_url"
+            "directions"
           ].join(",")
         )
         .in("id", ids);

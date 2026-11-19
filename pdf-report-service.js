@@ -62,38 +62,7 @@ const PdfReportService = {
     return Math.round((((bounded / 5) * 200) / 10)) * 10;
   },
 
-  async createAudioLinks({ responses, questions }) {
-    const endpoint = `${SUPABASE_CONFIG.url}/functions/v1/report-audio`;
-    const session = (await supabaseClient.auth.getSession()).data.session;
-    if (!session?.access_token) throw new Error("請先重新登入老師端，再匯出含音檔的成績單。");
-    const items = [];
-    const qMap = new Map(questions.map(q => [q.id, q]));
-    for (const r of responses) {
-      if (r.recording_path) items.push({ key: `${r.id}:student`, kind: "student", responseId: r.id });
-      const q = qMap.get(r.question_id);
-      if (q?.audio_url) items.push({ key: `${r.id}:question`, kind: "question", responseId: r.id });
-    }
-    if (!items.length) return {};
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}`, "apikey": SUPABASE_CONFIG.publishableKey },
-      body: JSON.stringify({ items })
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.error || `音檔 QR Code 產生失敗 (${res.status})`);
-    return body.links || {};
-  },
-
-  async createQrImages(links) {
-    if (!window.QRCode?.toDataURL) throw new Error("QR Code 本機套件未載入，請重新整理網頁後再試。");
-    const result = {};
-    await Promise.all(Object.entries(links).map(async ([key, url]) => {
-      result[key] = await window.QRCode.toDataURL(url, { width: 160, margin: 1, errorCorrectionLevel: "M" });
-    }));
-    return result;
-  },
-
-  build({ session, responses, questions, scores, aiAssessments = [], audioQrImages = {}, audioLinks = {} }) {
+  build({ session, responses, questions, scores, aiAssessments = [] }) {
     const qMap = new Map(
       questions.map((question) => [question.id, question])
     );
@@ -107,8 +76,8 @@ const PdfReportService = {
     const totalScoreText = estimatedToeicScore === null
       ? "— / 200"
       : `${estimatedToeicScore} / 200`;
-    const assessmentMap = new Map(
-      (aiAssessments || []).map((item) => [item.response_id, item])
+    const transcriptMap = new Map(
+      (aiAssessments || []).map((item) => [item.response_id, item.transcript || ""])
     );
     const teachers = [
       ...new Set(
@@ -144,10 +113,8 @@ const PdfReportService = {
         </tr>`;
     }).join("");
 
-    // Each question begins on a new printed page; oversized content may continue naturally.
-    const questionDetails = responses.map((response, questionIndex) => {
+    const questionDetails = responses.map((response) => {
       const question = qMap.get(response.question_id);
-      const score = sMap.get(response.id);
       const image = String(question?.image_url || "").trim();
       let imageHtml = "";
       if (image && !/^(?:data:|javascript:|blob:|\/\/)/i.test(image)) {
@@ -156,36 +123,14 @@ const PdfReportService = {
           : new URL(image.replace(/^\/+/, ""), new URL("./", window.location.href)).href;
         imageHtml = `<img class="question-image" src="${this.e(url)}" alt="題目圖片"/>`;
       }
-      const assessment = assessmentMap.get(response.id) || {};
-      const originalTranscript = String(assessment.original_transcript || assessment.raw_transcript || assessment.ai_transcript || assessment.transcript || "").trim();
-      // Only a separately stored teacher revision is shown as a corrected version.
-      const correctedTranscript = String(assessment.teacher_corrected_transcript || assessment.corrected_transcript || assessment.confirmed_transcript || "").trim();
-      const transcriptHtml = response.recording_path ? `
-        <div class="review-section"><div class="review-label">01 / STUDENT'S ORIGINAL TRANSCRIPT <span>學生原始逐字稿</span></div><div class="review-body original">${this.e(originalTranscript || "尚無逐字稿")}</div></div>
-        <div class="review-section"><div class="review-label">02 / TEACHER'S CORRECTED VERSION <span>老師完整修正版</span></div><div class="review-body corrected">${this.e(correctedTranscript || "")}</div></div>
-        <div class="review-section"><div class="review-label">03 / TEACHER'S FEEDBACK <span>老師評語與建議</span></div><div class="review-body feedback">${this.e(score?.teacher_comment || "")}</div></div>` : `
-        <div class="review-section"><div class="review-label">STUDENT'S RESPONSE <span>學生作答</span></div><div class="review-body original">${this.e(response.text_response || "未提供作答內容")}</div></div>`;
-      const qrHtml = [
-        ["question", "題目音檔 / Question Audio"],
-        ["student", "學生原始錄音 / Student Recording"]
-      ].map(([kind, label]) => {
-        const key = `${response.id}:${kind}`;
-        const img = audioQrImages[key];
-        const link = audioLinks[key];
-        return img && link ? `<div class="audio-qr"><img src="${this.e(img)}" alt="${this.e(label)} QR Code"/><strong>${this.e(label)}</strong><small>掃描播放 · 30 天內有效</small><a href="${this.e(link)}">開啟音檔</a></div>` : "";
-      }).join("");
+      const transcript = transcriptMap.get(response.id) || "";
       return `<section class="question-detail">
-        ${questionIndex === 0 ? `<h2 class="question-list-title">題目與學生作答</h2>` : ""}
-        <div class="question-intro">
-          <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
-          <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
-          ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
-          ${question?.passage ? `<div class="question-passage"><strong>題目閱讀資料 / Source Material：</strong><div>${this.e(question.passage)}</div></div>` : ""}
-        </div>
-        ${question?.prompt ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>${this.e(question.prompt)}</div></div>` : (!question?.passage ? `<div class="question-prompt"><strong>題目內容 / Question Prompt：</strong><div>此題尚未儲存題目內文，請於老師題庫確認。</div></div>` : "")}
+        <h3>Question ${this.e(response.question_order)} — ${this.e(question?.question_code || response.question_code_snapshot || "")}</h3>
+        <div><strong>題目：</strong>${this.e(question?.title || question?.prompt || question?.passage || "題目內容未儲存")}</div>
+        ${question?.directions ? `<div><strong>Directions：</strong>${this.e(question.directions)}</div>` : ""}
+        ${question?.passage && question?.prompt ? `<div>${this.e(question.passage)}</div>` : ""}
         ${imageHtml}
-        ${qrHtml ? `<div class="audio-qr-list">${qrHtml}</div>` : ""}
-        ${transcriptHtml}
+        <div class="answer"><strong>學生作答：</strong>${this.e(response.text_response || transcript || (response.recording_path ? "已提交錄音（尚無逐字稿）" : "未提供作答內容"))}</div>
       </section>`;
     }).join("");
 
@@ -219,66 +164,12 @@ td:first-child{width:22%}td:first-child strong,td:first-child span{display:block
 th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:last-child{width:22%;text-align:left}
 .footer{margin-top:16px;padding-top:9px;display:flex;justify-content:space-between;color:#81798a;border-top:1px solid #ded7e7;font-size:7.5px}
 .notice{margin-bottom:12px;padding:9px;background:#f1ecf8;border-radius:8px;text-align:center}
-.question-detail{break-before:page;page-break-before:always;break-inside:auto;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
-.review-section{margin:13px 0;break-inside:avoid;page-break-inside:avoid}.review-label{break-after:avoid;page-break-after:avoid}
-.review-label{padding:7px 10px;border-left:3px solid #6d4cbe;background:#eee9f7;color:#503c7a;font-size:10px;font-weight:800}
-.review-label span{float:right;color:#756e7f;font-size:9px;font-weight:600}
-.review-body{padding:12px 14px;border:1px solid #e4dced;border-top:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.85}
-.review-body.original{background:#fbfaff}.review-body.corrected{background:#fff;min-height:145px}.review-body.feedback{background:#f9f7fc;min-height:115px}
-.question-intro{break-inside:auto}.question-intro h3{break-after:avoid;page-break-after:avoid}.question-passage,.question-prompt{break-inside:avoid;page-break-inside:avoid;margin:10px 0;padding:10px 12px;border:1px solid #ded7e7;border-radius:6px;background:#fcfbff}
-.question-prompt{border-left:3px solid #6d4cbe;background:#f7f3fc}
-.question-passage>div,.question-prompt>div{margin-top:7px;white-space:pre-wrap;line-height:1.8}
-@media print{.review-body.corrected{min-height:18mm}.review-body.feedback{min-height:16mm}.question-detail{break-before:page;page-break-before:always}.question-detail + .question-detail{break-before:page;page-break-before:always}}
-.audio-qr-list{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0}.audio-qr{width:148px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #ded7e7;padding:7px;border-radius:8px;text-align:center}.audio-qr img{width:110px;height:110px}.audio-qr strong{font-size:9px}.audio-qr small,.audio-qr a{font-size:8px;overflow-wrap:anywhere}
-/* Keep the entire scoring summary together on one printed sheet. */
-.report-summary{break-inside:avoid;page-break-inside:avoid}
-.question-list-title{margin:0 0 10px}
-/* A4 compact print layout: keep each question together whenever it fits. */
-@media print{
-  @page{size:A4;margin:10mm 11mm}
-  body{font-size:9.5px;line-height:1.35}
-  .report-summary{break-inside:avoid-page;page-break-inside:avoid;display:block}
-  .report-summary .header{padding-bottom:8px}
-  .report-summary h1{font-size:19px;margin:3px 0}
-  .report-summary .hero{padding:7px 11px}
-  .report-summary .hero strong{font-size:23px}
-  .report-summary .meta{margin-top:8px;gap:5px}
-  .report-summary .card{padding:5px 7px}
-  .report-summary .total-score{margin-top:8px;padding:7px 10px}
-  .report-summary h2{margin:9px 0 5px;font-size:12px}
-  .report-summary .abilities{gap:4px}
-  .report-summary .ability{padding:5px 3px}
-  .report-summary .ability strong{font-size:14px;margin-top:2px}
-  .report-summary th,.report-summary td{padding:3px 4px;font-size:7px;line-height:1.25;overflow-wrap:anywhere}
-  .report-summary td:first-child{width:19%}
-  .report-summary th:last-child,.report-summary td:last-child{width:19%}
-  .report-summary tr{break-inside:avoid;page-break-inside:avoid}
-  .question-list-title{margin:0 0 6px}
-  .question-detail{break-before:page;page-break-before:always;break-inside:avoid-page;page-break-inside:avoid;padding:8px 10px;margin:0;border-radius:6px}
-  .question-detail h3{font-size:11px;margin:0 0 4px}
-  .question-detail div{margin:3px 0}
-  .question-intro{break-inside:avoid-page;page-break-inside:avoid}
-  .question-passage,.question-prompt{margin:5px 0;padding:6px 8px;break-inside:avoid-page;page-break-inside:avoid}
-  .question-passage>div,.question-prompt>div{margin-top:4px;line-height:1.4}
-  .question-image{max-height:140px;margin:4px auto}
-  .audio-qr-list{gap:8px;margin:5px 0}
-  .audio-qr{width:110px;padding:4px;gap:1px}
-  .audio-qr img{width:76px;height:76px}
-  .audio-qr strong{font-size:8px}.audio-qr small,.audio-qr a{font-size:7px}
-  .review-section{margin:5px 0;break-inside:avoid-page;page-break-inside:avoid}
-  .review-label{padding:4px 7px;font-size:9px}
-  .review-label span{font-size:8px}
-  .review-body{padding:6px 8px;font-size:9.5px;line-height:1.4}
-  .review-body.corrected{min-height:13mm}
-  .review-body.feedback{min-height:11mm}
-  .notice{display:none}
-}
-
+.question-detail{page-break-inside:avoid;break-inside:avoid;border:1px solid #e4dced;padding:12px;margin:12px 0;border-radius:8px}.question-detail h3{font-size:12px;margin:0 0 8px}.question-detail div{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.question-image{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:9px 0}.answer{padding:8px;background:#f7f3fc;border-radius:6px}
+@media print{.notice{display:none}}
 </style>
 </head>
 <body>
 <div class="notice">請在列印視窗選擇「另存為 PDF」。</div>
-<div class="report-summary">
 <header class="header">
   <div><div class="brand">ASPECT ENGLISH</div><h1>TOEIC Speaking Report</h1><div class="muted">Teacher-reviewed speaking assessment</div></div>
   <div class="hero"><span>Overall / 5</span><strong>${avg.overall ?? "—"}</strong><small>Estimated TOEIC ${totalScoreText}</small></div>
@@ -314,7 +205,7 @@ th:not(:first-child),td:not(:first-child){text-align:center}th:last-child,td:las
 <thead><tr><th>題目</th><th>Pron.</th><th>Int.</th><th>Gram.</th><th>Vocab.</th><th>Content</th><th>Overall</th><th>老師評語</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>
-</div>
+<h2>題目與學生作答</h2>
 ${questionDetails}
 <footer class="footer"><span>Aspect English - TOEIC SW Assessment Platform</span><span>本報告為老師評閱結果，非 ETS 官方成績單。</span></footer>
 <script>window.addEventListener("load",()=>setTimeout(()=>window.print(),300));</script>
@@ -322,21 +213,13 @@ ${questionDetails}
 </html>`;
   },
 
-  async export(data) {
+  export(data) {
     const reportWindow = window.open("", "_blank");
     if (!reportWindow) {
       throw new Error("瀏覽器封鎖了報告視窗，請允許彈出式視窗。");
     }
-    reportWindow.document.write("<p style=\"font-family:sans-serif;padding:24px\">正在建立安全音檔連結與 QR Code，請稍候…</p>");
-    try {
-      const audioLinks = await this.createAudioLinks(data);
-      const audioQrImages = await this.createQrImages(audioLinks);
-      reportWindow.document.open();
-      reportWindow.document.write(this.build({ ...data, audioLinks, audioQrImages }));
-      reportWindow.document.close();
-    } catch (error) {
-      reportWindow.close();
-      throw error;
-    }
+    reportWindow.document.open();
+    reportWindow.document.write(this.build(data));
+    reportWindow.document.close();
   }
 };
