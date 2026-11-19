@@ -40,20 +40,8 @@ const TranscriptionService = {
 
     return {
       transcript,
-      assessment: data?.assessment || null,
-      verificationTranscript: String(data?.verificationTranscript || "").trim(),
-      verificationWarning: String(data?.verificationWarning || "").trim()
+      assessment: data?.assessment || null
     };
-  },
-
-  async confirmTranscript(responseId, transcript) {
-    const { data, error } = await supabaseClient.functions.invoke("transcribe-audio", {
-      body: { responseId, action: "confirm_transcript", transcript }
-    });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    if (!data?.assessment) throw new Error("未取得確認後的逐字稿紀錄");
-    return data.assessment;
   },
 
   // 保留舊題庫編輯功能相容性。
