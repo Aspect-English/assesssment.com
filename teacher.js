@@ -75,6 +75,11 @@ const sectionConfig = {
     title: "測驗管理"
   },
 
+  homework: {
+    element: document.getElementById("homeworkSection"),
+    title: "作業管理"
+  },
+
   students: {
     element:
       document.getElementById(
