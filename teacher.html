@@ -16,7 +16,7 @@
   >
 
   <link rel="stylesheet" href="teacher.css?v=7.3.0">
-  <link rel="stylesheet" href="homework-management.css?v=8.0.3">
+  <link rel="stylesheet" href="homework-management.css?v=8.0.4">
 </head>
 
 <body class="auth-checking">
@@ -647,7 +647,7 @@
           <h2>口說寫作作業管理 <span class="hw-tag">V8.0.3 雲端設定</span></h2>
           <p class="hw-notice">可將 15 組作業設定儲存到 Supabase，並查看題庫數量。學生指派、作答與 PDF 尚未接上本介面；後端已預備老師專用自動抽題函式。</p>
           <div class="hw-actions"><button type="button" id="hwExport">匯出 15 組設定 JSON</button><label class="hw-import">匯入設定 JSON<input id="hwImport" type="file" accept="application/json,.json" hidden></label><button type="button" id="hwReset">重設為完整模擬考題數</button></div>
-          <div class="hw-grid"><aside class="hw-list" id="hwSetList" aria-label="15 組作業"></aside><div class="hw-editor"><h3 id="hwCurrentTitle">Homework 01</h3><label>作業名稱<input id="hwTitle" maxlength="100" type="text"></label><label>備註<textarea id="hwNotes" rows="2" maxlength="1000"></textarea></label><p>各 Part 題數（0 表示暫不配置；發布前每個 Part 至少 1 題）</p><div id="hwRules"></div><div class="hw-summary" id="hwSummary"></div><button type="button" id="hwSave">儲存到 Supabase</button><span id="hwMessage" role="status"></span></div></div>
+          <div class="hw-grid"><aside class="hw-list" id="hwSetList" aria-label="15 組作業"></aside><div class="hw-editor"><h3 id="hwCurrentTitle">Homework 01</h3><label>作業名稱<input id="hwTitle" maxlength="100" type="text"></label><label>備註<textarea id="hwNotes" rows="2" maxlength="1000"></textarea></label><p>各 Part 題數（0 表示暫不配置；發布前每個 Part 至少 1 題）</p><div id="hwRules"></div><div class="hw-summary" id="hwSummary"></div><div class="hw-v804" id="hwAssignPanel"><h3>V8.0.4｜學生作業指派（測試）</h3><p>先在 Supabase Authentication 建立學生帳號，並確認 profiles.role = student。指派前請先儲存本組作業設定。</p><label>學生<select id="hwAssignStudent"><option value="">載入中…</option></select></label><label>作業開放時間<input type="datetime-local" id="hwAssignOpen"></label><label>作業截止時間<input type="datetime-local" id="hwAssignDue"></label><label>課程權益到期時間<input type="datetime-local" id="hwAccessUntil"></label><button type="button" id="hwAssignButton">設定權益並自動指派此組作業</button><p id="hwAssignMessage" role="status"></p><div id="hwAssignHistory"></div></div><button type="button" id="hwSave">儲存到 Supabase</button><span id="hwMessage" role="status"></span></div></div>
         </div>
       </section>
       <section
@@ -1459,7 +1459,8 @@
 
   <script src="dashboard-service.js?v=5.0.1"></script>
   <script src="teacher.js?v=8.0.2-homework-nav-fix"></script>
-  <script src="homework-management.js?v=8.0.3"></script>
+  <script src="homework-management.js?v=8.0.4"></script>
+  <script src="homework-assignment-v804.js?v=8.0.4"></script>
   <script src="transcription-service.js?v=5.6.0"></script>
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
