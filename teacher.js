@@ -80,6 +80,11 @@ const sectionConfig = {
     title: "作業管理"
   },
 
+  studentManagement: {
+    element: document.getElementById("studentManagementSection"),
+    title: "學生管理"
+  },
+
   students: {
     element:
       document.getElementById(

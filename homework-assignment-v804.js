@@ -11,7 +11,11 @@
   if(error){say('請先安裝 V8.0.4 SQL：'+error.message);return;}
   students=data||[]; const sel=$('hwAssignStudent');const previous=sel.value;sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
   for(const x of data||[]){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';sel.append(o);}
-  if(previous && students.some(x=>x.id===previous))sel.value=previous;syncName();
+  if(previous && students.some(x=>x.id===previous))sel.value=previous;
+  const manage=$('hwManageStudent');const previousManage=manage.value;manage.replaceChildren();
+  const mblank=document.createElement('option');mblank.value='';mblank.textContent='請選擇學生';manage.append(mblank);
+  for(const x of students){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';manage.append(o);}
+  if(previousManage && students.some(x=>x.id===previousManage))manage.value=previousManage;syncName();
   if(!data?.length)say('目前沒有學生帳號。請先透過 Supabase Auth 建立測試學生及 profiles 紀錄。');
   await history();
  }
@@ -22,11 +26,11 @@
   for(const x of data||[]){const p=document.createElement('p');p.textContent=`${x.student_id}｜${x.status}｜截止 ${new Date(x.due_at).toLocaleString('zh-TW')}`;target.append(p);}
  }
 
- function syncName(){const item=students.find(x=>x.id===$('hwAssignStudent').value);$('hwStudentName').value=item?.display_name||'';}
- $('hwAssignStudent').addEventListener('change',syncName);
+ function syncName(){const item=students.find(x=>x.id===$('hwManageStudent').value);$('hwStudentName').value=item?.display_name||'';}
+ $('hwManageStudent').addEventListener('change',syncName);
  $('hwStudentReload').addEventListener('click',async()=>{await refresh();$('hwStudentMessage').textContent='學生清單已重新載入';});
  $('hwStudentRename').addEventListener('click',async()=>{
-  const id=$('hwAssignStudent').value,name=$('hwStudentName').value.trim();
+  const id=$('hwManageStudent').value,name=$('hwStudentName').value.trim();
   if(!id){$('hwStudentMessage').textContent='請先選擇學生';return;}
   if(!name||name.length>80){$('hwStudentMessage').textContent='請輸入 1～80 字的學生姓名';return;}
   const btn=$('hwStudentRename');btn.disabled=true;
