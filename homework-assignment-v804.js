@@ -2,14 +2,16 @@
 /* V8.0.4 teacher-only assignment panel. No student exam flow yet. */
 (()=>{
  const $=id=>document.getElementById(id); if(!$('hwAssignPanel'))return;
+ let students=[];
  const say=t=>{$('hwAssignMessage').textContent=t;};
  const dt=v=>{if(!v)return null;const d=new Date(v);return Number.isNaN(d.getTime())?null:d.toISOString();};
  async function refresh(){
   if(typeof supabaseClient==='undefined'){say('Supabase client 未載入');return;}
   const {data,error}=await supabaseClient.rpc('hw_v804_students');
   if(error){say('請先安裝 V8.0.4 SQL：'+error.message);return;}
-  const sel=$('hwAssignStudent');sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
+  students=data||[]; const sel=$('hwAssignStudent');const previous=sel.value;sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
   for(const x of data||[]){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';sel.append(o);}
+  if(previous && students.some(x=>x.id===previous))sel.value=previous;syncName();
   if(!data?.length)say('目前沒有學生帳號。請先透過 Supabase Auth 建立測試學生及 profiles 紀錄。');
   await history();
  }
@@ -19,6 +21,22 @@
   const heading=document.createElement('strong');heading.textContent=`Homework ${set} 已指派 ${data?.length||0} 筆（最多顯示 30 筆）`;target.append(heading);
   for(const x of data||[]){const p=document.createElement('p');p.textContent=`${x.student_id}｜${x.status}｜截止 ${new Date(x.due_at).toLocaleString('zh-TW')}`;target.append(p);}
  }
+
+ function syncName(){const item=students.find(x=>x.id===$('hwAssignStudent').value);$('hwStudentName').value=item?.display_name||'';}
+ $('hwAssignStudent').addEventListener('change',syncName);
+ $('hwStudentReload').addEventListener('click',async()=>{await refresh();$('hwStudentMessage').textContent='學生清單已重新載入';});
+ $('hwStudentRename').addEventListener('click',async()=>{
+  const id=$('hwAssignStudent').value,name=$('hwStudentName').value.trim();
+  if(!id){$('hwStudentMessage').textContent='請先選擇學生';return;}
+  if(!name||name.length>80){$('hwStudentMessage').textContent='請輸入 1～80 字的學生姓名';return;}
+  const btn=$('hwStudentRename');btn.disabled=true;
+  try{
+   const {error}=await supabaseClient.rpc('hw_v804_rename_student',{p_student:id,p_name:name});
+   if(error)throw error;
+   await refresh();$('hwStudentMessage').textContent='學生姓名已儲存至 Supabase';
+  }catch(e){$('hwStudentMessage').textContent='修改失敗：'+(e.message||e);}
+  finally{btn.disabled=false;}
+ });
  $('hwAssignButton').addEventListener('click',async()=>{
   const student=$('hwAssignStudent').value,set=Number(($('hwCurrentTitle')?.textContent||'').match(/\d+/)?.[0]);
   const opens=dt($('hwAssignOpen').value),due=dt($('hwAssignDue').value),until=dt($('hwAccessUntil').value);
