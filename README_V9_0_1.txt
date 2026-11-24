@@ -1,0 +1,1 @@
+V9.0.1 測試版：先備份並於測試環境執行 SQL，再覆蓋四個前端檔案。SQL trigger 會阻止匿名及非學生帳號新增測驗；舊版入口也受影響。舊紀錄不自動綁定。既有 RLS 未取得，需管理員確認學生僅能讀寫本人 session、answers、錄音；此補丁不代表完整安全上線。作業入口仍未開放。回復舊版前端時，管理員可執行 DROP TRIGGER IF EXISTS v901_bind_session ON public.test_sessions; 保留新增欄位及紀錄。測試學生必須已有 Auth 帳號及 active student profile、display_name。未執行線上 SQL 或瀏覽器實測。

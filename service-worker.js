@@ -1,5 +1,5 @@
-const CACHE_NAME = "aspect-toeic-sw-github-pages-v9.0.0";
-const APP_SHELL=["./","./index.html","./style.css","./style-writing.css","./favicon.svg","./icon-192.png","./icon-512.png","./config.js","./supabase-service.js","./utils.js","./session.js","./recorder.js","./upload.js","./response.js","./question-config.js","./test-service.js","./assessment-settings.js","./question-service.js","./audio-cues.js","./assessment-engine.js","./app.js"];
+const CACHE_NAME = "aspect-toeic-sw-github-pages-v9.0.1";
+const APP_SHELL=["./","./index.html","./style.css","./style-writing.css","./favicon.svg","./icon-192.png","./icon-512.png","./config.js","./supabase-service.js","./utils.js","./session.js","./recorder.js","./upload.js","./response.js","./question-config.js","./test-service.js","./assessment-settings.js","./question-service.js","./audio-cues.js","./assessment-engine.js","./app.js","./student-access-v901.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>Promise.allSettled(APP_SHELL.map(u=>c.add(u)))));self.skipWaiting();});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener("fetch",e=>{

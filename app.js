@@ -441,6 +441,7 @@ function generateTestId() {
  * 首頁：進入設備測試
  */
 startButton.addEventListener("click", async () => {
+  if (!window.StudentAccessV901 || !(await window.StudentAccessV901.verifySelection())) return;
   const studentName =
     studentNameInput.value.trim();
 
@@ -4517,6 +4518,7 @@ restartTestButton.addEventListener(
     );
 
     showPage("start");
+    window.StudentAccessV901?.refresh();
   }
 );
 

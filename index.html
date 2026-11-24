@@ -49,11 +49,11 @@
           </p>
         </div>
 
-        <div class="v9-entry"><button type="button" id="v9Exam" aria-pressed="true">程度檢測<br><small>Assessment Center</small></button><button type="button" id="v9Homework" aria-pressed="false">作業繳交<br><small>Homework Center</small></button></div><div id="v9HomeworkNotice" hidden><p>在家作業入口正在整合，尚未開放作答。請向老師確認作業安排。</p></div><div id="v9ExamForm"><div class="form-group">
+        <div class="v9-entry"><button type="button" id="v9Exam" aria-pressed="true">程度檢測<br><small>Assessment Center</small></button><button type="button" id="v9Homework" aria-pressed="false">作業繳交<br><small>Homework Center</small></button></div><div id="v9HomeworkNotice" hidden><p>在家作業入口正在整合，尚未開放作答。請向老師確認作業安排。</p></div><div id="v9ExamForm"><div id="v901Login" class="form-group"><label for="v901Email">學生 Email</label><input id="v901Email" type="email" autocomplete="username"><label for="v901Password">密碼</label><input id="v901Password" type="password" autocomplete="current-password"><button type="button" id="v901SignIn" class="primary-button">學生登入</button></div><p id="v901Status" role="status"></p><button type="button" id="v901SignOut" hidden>登出學生帳號</button><div class="form-group">
           <label for="studentName">學生姓名</label>
 
           <input
-            id="studentName"
+            id="studentName" readonly
             type="text"
             placeholder="請輸入學生姓名"
             autocomplete="off"
@@ -63,7 +63,7 @@
         <div class="form-group">
           <label for="testType">測驗類型</label>
 
-          <select id="testType">
+          <select id="testType" disabled>
             <option value="">請選擇測驗類型</option>
 
             <option value="quick">
@@ -87,7 +87,7 @@
         <div id="startError" class="error-message"></div>
 
         <button
-          id="startButton"
+          id="startButton" disabled
           class="primary-button"
           type="button"
         >
@@ -822,9 +822,9 @@
 <script src="question-service.js?v=5.0.3-direction-required"></script>
 <script src="audio-cues.js?v=5.0.3-direction-required"></script>
 <script src="assessment-engine.js?v=5.3.9"></script>
-<script src="app.js?v=github-pages-v7"></script>
+<script src="app.js?v=9.0.1"></script>
 <script src="pwa-register.js?v=github-pages-v7"></script>
 
-<script src="portal-v9.js?v=9.0.0"></script></body>
+<script src="portal-v9.js?v=9.0.0"></script><script src="student-access-v901.js?v=9.0.1"></script></body>
 
 </html>
