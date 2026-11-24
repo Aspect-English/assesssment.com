@@ -4,3 +4,21 @@
 .hw-v804{margin-top:22px;padding:18px;border:1px solid #d7dce9;border-radius:12px}.hw-v804 label{display:block;margin:10px 0}.hw-v804 input,.hw-v804 select{display:block;width:100%;max-width:380px;padding:8px}.hw-v804 button{margin-top:8px}.hw-v804 p{overflow-wrap:anywhere}
 
 .hw-student-editor{border:1px solid #d7dce9;border-radius:9px;padding:12px 15px;margin:12px 0;background:#f7f9fd}.hw-student-editor h4{margin:0 0 8px}.hw-student-editor p{font-size:13px;line-height:1.6}.hw-student-editor #hwStudentMessage{color:#294c91}
+
+/* V8.0.6 student management, scoped to independent page */
+#studentManagementSection .sm-wrap{max-width:1150px}
+#studentManagementSection .sm-intro{color:#647087;line-height:1.7;font-size:14px}
+#studentManagementSection .sm-card{background:#fff;border:1px solid #d8dfeb;border-radius:12px;padding:24px;margin:18px 0}
+#studentManagementSection .sm-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#studentManagementSection h3{margin:0 0 16px;font-size:18px}
+#studentManagementSection label{display:block;margin:16px 0 6px;color:#334155;font-weight:600;font-size:14px}
+#studentManagementSection input,#studentManagementSection select{display:block;width:100%;max-width:520px;box-sizing:border-box;border:1px solid #c7cdd8;border-radius:8px;padding:12px;background:#fff;color:#25314a;font:inherit}
+#studentManagementSection button{border:1px solid #b4bdd1;border-radius:8px;background:#fff;color:#334155;padding:10px 15px;font:inherit;cursor:pointer}
+#studentManagementSection #hwStudentRename{display:block;margin-top:20px;background:#2546a8;color:#fff;border-color:#2546a8}
+#studentManagementSection button:disabled{opacity:.55;cursor:wait}
+#studentManagementSection .sm-table-wrap{overflow-x:auto;margin-top:18px}
+#studentManagementSection .sm-table{width:100%;border-collapse:collapse;text-align:left}
+#studentManagementSection .sm-table th,#studentManagementSection .sm-table td{padding:13px 10px;border-bottom:1px solid #e8eaf0;overflow-wrap:anywhere}
+#studentManagementSection .sm-table th{background:#f1f5fb;color:#475569;font-size:13px}
+#studentManagementSection .sm-table td:last-child{width:90px}
+@media(max-width:600px){#studentManagementSection .sm-card{padding:15px}#studentManagementSection .sm-table th,#studentManagementSection .sm-table td{padding:8px}}

@@ -16,7 +16,7 @@
   >
 
   <link rel="stylesheet" href="teacher.css?v=7.3.0">
-  <link rel="stylesheet" href="homework-management.css?v=8.0.5-student-page">
+  <link rel="stylesheet" href="homework-management.css?v=8.0.6-student-layout">
 </head>
 
 <body class="auth-checking">
@@ -91,7 +91,7 @@
           測驗管理
         </button>
 
-        <button class="nav-item" data-section="homework" type="button"><span>▦</span> 作業管理 <small style="font-size:10px;opacity:.75">V8.0.5</small></button>
+        <button class="nav-item" data-section="homework" type="button"><span>▦</span> 作業管理 <small style="font-size:10px;opacity:.75">V8.0.6</small></button>
         <button class="nav-item" data-section="studentManagement" type="button"><span>♧</span> 學生管理</button>
         <button
           class="nav-item"
@@ -651,7 +651,19 @@
           <div class="hw-grid"><aside class="hw-list" id="hwSetList" aria-label="15 組作業"></aside><div class="hw-editor"><h3 id="hwCurrentTitle">Homework 01</h3><label>作業名稱<input id="hwTitle" maxlength="100" type="text"></label><label>備註<textarea id="hwNotes" rows="2" maxlength="1000"></textarea></label><p>各 Part 題數（0 表示暫不配置；發布前每個 Part 至少 1 題）</p><div id="hwRules"></div><div class="hw-summary" id="hwSummary"></div><div class="hw-v804" id="hwAssignPanel"><h3>V8.0.4｜學生作業指派（測試）</h3><p>先在 Supabase Authentication 建立學生帳號，並確認 profiles.role = student。指派前請先儲存本組作業設定。</p><label>學生<select id="hwAssignStudent"><option value="">載入中…</option></select></label><label>作業開放時間<input type="datetime-local" id="hwAssignOpen"></label><label>作業截止時間<input type="datetime-local" id="hwAssignDue"></label><label>課程權益到期時間<input type="datetime-local" id="hwAccessUntil"></label><button type="button" id="hwAssignButton">設定權益並自動指派此組作業</button><p id="hwAssignMessage" role="status"></p><div id="hwAssignHistory"></div></div><button type="button" id="hwSave">儲存到 Supabase</button><span id="hwMessage" role="status"></span></div></div>
         </div>
       </section>
-      <section id="studentManagementSection" class="portal-section"><div class="hw-wrap"><h2>學生管理 <span class="hw-tag">V8.0.5</span></h2><p class="hw-notice">在此編輯學生姓名；作業指派請至「作業管理」。建立新的登入帳號仍須由管理員在 Supabase Authentication 建立並設定 student 角色。</p><section class="hw-student-editor"><h3>編輯學生資料</h3><label>選擇學生<select id="hwManageStudent"><option value="">請選擇學生</option></select></label><p>新增學生帳號：請先到 Supabase Authentication → Users 建立登入帳號，並確認 profiles 的 role 為 student。完成後按「重新載入學生」。</p><button type="button" id="hwStudentReload">重新載入學生</button><label>學生姓名<input id="hwStudentName" maxlength="80" placeholder="先從上方選擇學生" autocomplete="off"></label><button type="button" id="hwStudentRename">儲存學生姓名</button><p id="hwStudentMessage" role="status"></p></section></div></section>
+      <section id="studentManagementSection" class="portal-section">
+        <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V8.0.6</span></h2>
+          <p class="sm-intro">管理學生姓名及登入帳號資料。作業指派請至「作業管理」。</p>
+          <section class="sm-card"><div class="sm-heading"><h3>學生清單 <span id="hwStudentCount" class="hw-tag"></span></h3><button type="button" id="hwStudentReload">重新載入學生</button></div>
+            <label for="hwStudentSearch">搜尋學生</label><input id="hwStudentSearch" type="search" placeholder="輸入姓名或 Email" autocomplete="off">
+            <div class="sm-table-wrap"><table class="sm-table"><thead><tr><th>學生姓名</th><th>電子郵件</th><th>操作</th></tr></thead><tbody id="hwStudentRows"></tbody></table></div>
+          </section>
+          <section class="hw-student-editor sm-card"><h3>編輯學生資料</h3>
+            <label for="hwManageStudent">選擇學生</label><select id="hwManageStudent"><option value="">請選擇學生</option></select>
+            <label for="hwStudentName">學生姓名</label><input id="hwStudentName" maxlength="80" placeholder="先從上方選擇學生" autocomplete="off">
+            <button type="button" id="hwStudentRename">儲存學生姓名</button><p id="hwStudentMessage" role="status" aria-live="polite"></p>
+          </section><p class="sm-intro">新增登入帳號仍須由管理員在 Supabase Authentication 建立並設定 student 角色，完成後重新載入學生。</p>
+        </div></section>
       <section
         id="studentsSection"
         class="portal-section"
@@ -1460,9 +1472,9 @@
   <script src="student-records.js?v=7.8.0"></script>
 
   <script src="dashboard-service.js?v=5.0.1"></script>
-  <script src="teacher.js?v=8.0.5-student-page"></script>
+  <script src="teacher.js?v=8.0.6-student-layout"></script>
   <script src="homework-management.js?v=8.0.4"></script>
-  <script src="homework-assignment-v804.js?v=8.0.5-student-page"></script>
+  <script src="homework-assignment-v804.js?v=8.0.6-student-layout"></script>
   <script src="transcription-service.js?v=5.6.0"></script>
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>

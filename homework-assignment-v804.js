@@ -8,16 +8,16 @@
  async function refresh(){
   if(typeof supabaseClient==='undefined'){say('Supabase client 未載入');return;}
   const {data,error}=await supabaseClient.rpc('hw_v804_students');
-  if(error){say('請先安裝 V8.0.4 SQL：'+error.message);return;}
+  if(error){say('學生清單讀取失敗：'+error.message);$('hwStudentMessage').textContent='學生清單讀取失敗：'+error.message;return false;}
   students=data||[]; const sel=$('hwAssignStudent');const previous=sel.value;sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
   for(const x of data||[]){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';sel.append(o);}
   if(previous && students.some(x=>x.id===previous))sel.value=previous;
   const manage=$('hwManageStudent');const previousManage=manage.value;manage.replaceChildren();
   const mblank=document.createElement('option');mblank.value='';mblank.textContent='請選擇學生';manage.append(mblank);
   for(const x of students){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';manage.append(o);}
-  if(previousManage && students.some(x=>x.id===previousManage))manage.value=previousManage;syncName();
+  if(previousManage && students.some(x=>x.id===previousManage))manage.value=previousManage;syncName();renderStudents();
   if(!data?.length)say('目前沒有學生帳號。請先透過 Supabase Auth 建立測試學生及 profiles 紀錄。');
-  await history();
+  await history();return true;
  }
  async function history(){const set=Number(($('hwCurrentTitle')?.textContent||'').match(/\d+/)?.[0]);if(!set)return;
   const {data,error}=await supabaseClient.from('hw_v804_assignments').select('id,student_id,set_number,status,opens_at,due_at').eq('set_number',set).order('created_at',{ascending:false}).limit(30);
@@ -27,8 +27,16 @@
  }
 
  function syncName(){const item=students.find(x=>x.id===$('hwManageStudent').value);$('hwStudentName').value=item?.display_name||'';}
+ function renderStudents(){
+  const q=$('hwStudentSearch').value.trim().toLowerCase();const rows=$('hwStudentRows');rows.replaceChildren();
+  const filtered=students.filter(x=>[x.display_name,x.email].some(v=>String(v||'').toLowerCase().includes(q)));
+  $('hwStudentCount').textContent=`${filtered.length} / ${students.length} 人`;
+  for(const x of filtered){const tr=document.createElement('tr');for(const value of [x.display_name||'未設定姓名',x.email||'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.textContent='編輯';b.addEventListener('click',()=>{$('hwManageStudent').value=x.id;syncName();$('hwStudentMessage').textContent='';$('hwStudentName').focus();});td.append(b);tr.append(td);rows.append(tr);}
+  if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=3;td.textContent=q?'找不到符合的學生':'目前沒有學生';tr.append(td);rows.append(tr);}
+ }
+ $('hwStudentSearch').addEventListener('input',renderStudents);
  $('hwManageStudent').addEventListener('change',syncName);
- $('hwStudentReload').addEventListener('click',async()=>{await refresh();$('hwStudentMessage').textContent='學生清單已重新載入';});
+ $('hwStudentReload').addEventListener('click',async()=>{if(await refresh())$('hwStudentMessage').textContent='學生清單已重新載入';});
  $('hwStudentRename').addEventListener('click',async()=>{
   const id=$('hwManageStudent').value,name=$('hwStudentName').value.trim();
   if(!id){$('hwStudentMessage').textContent='請先選擇學生';return;}
@@ -37,7 +45,7 @@
   try{
    const {error}=await supabaseClient.rpc('hw_v804_rename_student',{p_student:id,p_name:name});
    if(error)throw error;
-   await refresh();$('hwStudentMessage').textContent='學生姓名已儲存至 Supabase';
+   if(await refresh())$('hwStudentMessage').textContent='學生姓名已儲存至 Supabase';
   }catch(e){$('hwStudentMessage').textContent='修改失敗：'+(e.message||e);}
   finally{btn.disabled=false;}
  });
