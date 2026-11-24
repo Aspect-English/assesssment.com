@@ -9,7 +9,7 @@
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
-  <title>多益口說寫作程度檢測</title>
+  <title>Aspect TOEIC SW V9.0</title>
 
   <meta name="theme-color" content="#195a41">
   <meta name="application-name" content="TOEIC SW">
@@ -28,7 +28,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css?v=5.0.5-desktop-fit">
   <link rel="stylesheet" href="style-writing.css?v=7.3.0">
-</head>
+<link rel="stylesheet" href="portal-v9.css?v=9.0.0"></head>
 
 <body>
 
@@ -49,7 +49,7 @@
           </p>
         </div>
 
-        <div class="form-group">
+        <div class="v9-entry"><button type="button" id="v9Exam" aria-pressed="true">程度檢測<br><small>Assessment Center</small></button><button type="button" id="v9Homework" aria-pressed="false">作業繳交<br><small>Homework Center</small></button></div><div id="v9HomeworkNotice" hidden><p>在家作業入口正在整合，尚未開放作答。請向老師確認作業安排。</p></div><div id="v9ExamForm"><div class="form-group">
           <label for="studentName">學生姓名</label>
 
           <input
@@ -67,7 +67,7 @@
             <option value="">請選擇測驗類型</option>
 
             <option value="quick">
-              口說寫作快速程度檢測
+              前測（簡易程度檢測）
             </option>
 
             <option value="speaking">
@@ -92,7 +92,7 @@
           type="button"
         >
           進入設備測試
-        </button>
+        </button></div>
 
       </div>
 
@@ -825,6 +825,6 @@
 <script src="app.js?v=github-pages-v7"></script>
 <script src="pwa-register.js?v=github-pages-v7"></script>
 
-</body>
+<script src="portal-v9.js?v=9.0.0"></script></body>
 
 </html>
