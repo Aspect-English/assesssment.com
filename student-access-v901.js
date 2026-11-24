@@ -1,12 +1,10 @@
-(()=>{
-'use strict';
-const $=id=>document.getElementById(id), name=$('studentName'), select=$('testType'), start=$('startButton'), status=$('v901Status'), login=$('v901Login'), out=$('v901SignOut'), sign=$('v901SignIn');
-const options=Array.from(select.options).map(o=>({value:o.value,text:o.textContent}));
-let busy=false;
-function lock(){name.value='';select.replaceChildren(new Option('請先登入學生帳號',''));select.disabled=true;start.disabled=true;}
-async function refresh(){lock();try{const {data,error}=await supabaseClient.rpc('v901_student_exam_access');if(error)throw error;name.value=data.name;login.hidden=true;out.hidden=false;select.replaceChildren(new Option('請選擇測驗類型',''));for(const o of options.filter(o=>o.value&&!data.completed.includes(o.value)))select.add(new Option(o.text,o.value));select.disabled=select.options.length===1;start.disabled=select.disabled;status.textContent=select.disabled?'所有測驗均已完成。':'已驗證學生身分；僅顯示尚未完成的測驗。';return true;}catch(e){login.hidden=false;out.hidden=true;status.textContent='請使用有效學生帳號登入。若已登入仍無法使用，請聯絡老師確認 SQL 與帳號角色。';return false;}}
-sign.onclick=async()=>{if(busy)return;busy=true;sign.disabled=true;try{const {error}=await supabaseClient.auth.signInWithPassword({email:$('v901Email').value.trim(),password:$('v901Password').value});$('v901Password').value='';if(error)throw error;await refresh();}catch(e){lock();status.textContent='登入失敗，請確認 Email 與密碼。';}finally{busy=false;sign.disabled=false;}};
-out.onclick=async()=>{const {error}=await supabaseClient.auth.signOut({scope:'local'});if(error){status.textContent='登出失敗，請重試。';return;}await refresh();};
-window.StudentAccessV901={refresh,async verifySelection(){const choice=select.value;if(!choice)return false;const ok=await refresh();if(!ok||!Array.from(select.options).some(o=>o.value===choice)){status.textContent='此測驗目前不可開始，請重新選擇。';return false;}select.value=choice;return true;}};
-refresh();
-})();
+(()=>{'use strict';
+const $=id=>document.getElementById(id), name=$('studentName'), select=$('testType'), start=$('startButton'), status=$('v901Status'), sign=$('v901SignIn'), out=$('v901SignOut');
+const options=Array.from(select.options).map(o=>({value:o.value,text:o.textContent}));let mode='exam',busy=false;
+function lock(){select.replaceChildren(new Option('請先確認身分',''));select.disabled=true;start.disabled=true;}
+async function refresh(){lock();try{const {data,error}=await supabaseClient.rpc('v901d_access');if(error||data.mode!==mode)throw Error('access');name.value=data.name;out.hidden=false; if(mode==='homework'){status.textContent='已驗證。'+(data.homework.length?data.homework.map(x=>`WEEK ${x.week}（${x.status}）`).join('、'):'目前無可用作業')+'。作答功能尚未開放。';return true;}select.replaceChildren(new Option('請選擇測驗',''));for(const o of options.filter(o=>o.value===data.kind&&!data.completed.includes(o.value)))select.add(new Option(o.text,o.value));select.disabled=select.options.length===1;start.disabled=select.disabled;status.textContent=select.disabled?'此測驗已完成或代碼已使用。':'身分確認成功，請選擇測驗。';return true;}catch{status.textContent='請輸入姓名及代碼。';return false;}}
+function switchMode(m){mode=m;lock();$('v901Code').value='';$('v901CodeLabel').textContent=m==='exam'?'測驗代碼':'學生專屬代碼';$('v901ExamFields').hidden=m==='homework';$('v9Exam').setAttribute('aria-pressed',String(m==='exam'));$('v9Homework').setAttribute('aria-pressed',String(m==='homework'));status.textContent='請確認身分。';}
+$('v9Exam').onclick=()=>switchMode('exam');$('v9Homework').onclick=()=>switchMode('homework');
+sign.onclick=async()=>{if(busy)return;busy=true;sign.disabled=true;lock();try{const res=await fetch(SUPABASE_CONFIG.url+'/functions/v1/student-code',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_CONFIG.publishableKey},body:JSON.stringify({name:$('v901Name').value.trim(),code:$('v901Code').value.trim(),mode})});const data=await res.json();if(!res.ok)throw Error(data.error||'驗證失敗');const {error}=await supabaseClient.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});if(error)throw error;await refresh();}catch(e){status.textContent=e.message;}finally{$('v901Code').value='';busy=false;sign.disabled=false;}};
+out.onclick=async()=>{await supabaseClient.auth.signOut({scope:'local'});out.hidden=true;lock();status.textContent='已登出。';};
+window.StudentAccessV901={refresh,async verifySelection(){const choice=select.value;if(mode!=='exam'||!choice)return false;const ok=await refresh();if(!ok||!Array.from(select.options).some(o=>o.value===choice))return false;select.value=choice;return true;}};lock();refresh();})();

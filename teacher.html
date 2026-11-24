@@ -603,7 +603,7 @@
       <section
         id="testsSection"
         class="portal-section"
-      >
+      ><div id="v901dExamPanel"></div>
 
         <div class="section-toolbar">
 
@@ -648,7 +648,7 @@
           <div class="hw-grid"><aside class="hw-list" id="hwSetList" aria-label="15 組作業"></aside><div class="hw-editor"><h3 id="hwCurrentTitle">Homework 01</h3><label>作業名稱<input id="hwTitle" maxlength="100" type="text"></label><label>備註<textarea id="hwNotes" rows="2" maxlength="1000"></textarea></label><p>各 Part 題數（0 表示暫不配置；發布前每個 Part 至少 1 題）</p><div id="hwRules"></div><div class="hw-summary" id="hwSummary"></div><div class="hw-v804" id="hwAssignPanel"><h3>V8.0.4｜學生作業指派（測試）</h3><p>先在 Supabase Authentication 建立學生帳號，並確認 profiles.role = student。指派前請先儲存本組作業設定。</p><label>學生<select id="hwAssignStudent"><option value="">載入中…</option></select></label><label>作業開放時間<input type="datetime-local" id="hwAssignOpen"></label><label>作業截止時間<input type="datetime-local" id="hwAssignDue"></label><label>課程權益到期時間<input type="datetime-local" id="hwAccessUntil"></label><button type="button" id="hwAssignButton">設定權益並自動指派此組作業</button><p id="hwAssignMessage" role="status"></p><div id="hwAssignHistory"></div></div><button type="button" id="hwSave">儲存到 Supabase</button><span id="hwMessage" role="status"></span></div></div>
         </div>
       </section>
-      <section id="studentManagementSection" class="portal-section">
+      <section id="studentManagementSection" class="portal-section"><div id="v901dHomeworkPanel"></div>
         <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V8.0.6</span></h2>
           <p class="sm-intro">管理學生姓名及登入帳號資料。作業指派請至「作業管理」。</p>
           <section class="sm-card"><div class="sm-heading"><h3>學生清單 <span id="hwStudentCount" class="hw-tag"></span></h3><button type="button" id="hwStudentReload">重新載入學生</button></div>
@@ -1476,5 +1476,5 @@
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
 
-</body>
+<script src="teacher-code-v901d.js"></script></body>
 </html>

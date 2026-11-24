@@ -9,7 +9,8 @@ if (!window.supabase) {
 if (
   typeof SUPABASE_CONFIG === "undefined" ||
   !SUPABASE_CONFIG.url ||
-  !SUPABASE_CONFIG.publishableKey
+  !SUPABASE_CONFIG.publishableKey,
+    {auth:{storageKey: location.pathname.endsWith("teacher.html") || !document.getElementById("v901Name") ? "sb-dimbyiqimxypgatjmdhp-auth-token" : "aspect-student-v901d"}}
 ) {
   throw new Error(
     "Supabase 設定不完整，請檢查 config.js。"
@@ -19,7 +20,8 @@ if (
 const supabaseClient =
   window.supabase.createClient(
     SUPABASE_CONFIG.url,
-    SUPABASE_CONFIG.publishableKey
+    SUPABASE_CONFIG.publishableKey,
+    {auth:{storageKey: location.pathname.endsWith("teacher.html") || !document.getElementById("v901Name") ? "sb-dimbyiqimxypgatjmdhp-auth-token" : "aspect-student-v901d"}}
   );
 
 console.log("Supabase Client 初始化完成");
