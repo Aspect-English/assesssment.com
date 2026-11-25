@@ -2,14 +2,14 @@
 /* V8.0.4 teacher-only assignment panel. No student exam flow yet. */
 (()=>{
  const $=id=>document.getElementById(id); if(!$('hwAssignPanel'))return;
- let students=[];
+ let students=[], codeInfo=new Map(), codeError=false;
  const say=t=>{$('hwAssignMessage').textContent=t;};
  const dt=v=>{if(!v)return null;const d=new Date(v);return Number.isNaN(d.getTime())?null:d.toISOString();};
  async function refresh(){
   if(typeof supabaseClient==='undefined'){say('Supabase client 未載入');return;}
   const {data,error}=await supabaseClient.rpc('hw_v804_students');
   if(error){say('學生清單讀取失敗：'+error.message);$('hwStudentMessage').textContent='學生清單讀取失敗：'+error.message;return false;}
-  students=data||[]; const sel=$('hwAssignStudent');const previous=sel.value;sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
+  students=data||[]; const result=await supabaseClient.rpc("v901d_student_code_list"); codeError=!!result.error; codeInfo=new Map((result.data||[]).map(x=>[x.student_id,x])); const sel=$('hwAssignStudent');const previous=sel.value;sel.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent='請選擇學生';sel.append(blank);
   for(const x of data||[]){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';sel.append(o);}
   if(previous && students.some(x=>x.id===previous))sel.value=previous;
   const manage=$('hwManageStudent');const previousManage=manage.value;manage.replaceChildren();
@@ -31,9 +31,10 @@
   const q=$('hwStudentSearch').value.trim().toLowerCase();const rows=$('hwStudentRows');rows.replaceChildren();
   const filtered=students.filter(x=>[x.display_name,x.email].some(v=>String(v||'').toLowerCase().includes(q)));
   $('hwStudentCount').textContent=`${filtered.length} / ${students.length} 人`;
-  for(const x of filtered){const tr=document.createElement('tr');for(const value of [x.display_name||'未設定姓名',x.email||'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.textContent='編輯';b.addEventListener('click',()=>{$('hwManageStudent').value=x.id;syncName();$('hwStudentMessage').textContent='';$('hwStudentName').focus();});td.append(b);tr.append(td);rows.append(tr);}
-  if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=3;td.textContent=q?'找不到符合的學生':'目前沒有學生';tr.append(td);rows.append(tr);}
+  for(const x of filtered){const tr=document.createElement('tr');for(const value of [x.display_name||'未設定姓名',codeInfo.get(x.id)?.expires?new Date(codeInfo.get(x.id).expires).toLocaleString('zh-TW'):'—',codeError?'讀取失敗':!codeInfo.has(x.id)?'未發放':codeInfo.get(x.id).revoked?'已停用':Date.parse(codeInfo.get(x.id).expires)<=Date.now()?'已到期':'使用中']){const td=document.createElement('td');td.textContent=value;tr.append(td);}const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.textContent='編輯';b.addEventListener('click',()=>{$('hwManageStudent').value=x.id;syncName();$('hwStudentMessage').textContent='';$('hwStudentName').focus();});td.append(b);tr.append(td);rows.append(tr);}
+  if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent=q?'找不到符合的學生':'目前沒有學生';tr.append(td);rows.append(tr);}
  }
+ document.addEventListener('d5-refresh-codes',async()=>{const r=await supabaseClient.rpc('v901d_student_code_list');codeError=!!r.error;codeInfo=new Map((r.data||[]).map(x=>[x.student_id,x]));renderStudents();});
  $('hwStudentSearch').addEventListener('input',renderStudents);
  $('hwManageStudent').addEventListener('change',syncName);
  $('hwStudentReload').addEventListener('click',async()=>{if(await refresh())$('hwStudentMessage').textContent='學生清單已重新載入';});
