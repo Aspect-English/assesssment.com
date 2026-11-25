@@ -16,7 +16,7 @@
   const mblank=document.createElement('option');mblank.value='';mblank.textContent='請選擇學生';manage.append(mblank);
   for(const x of students){const o=document.createElement('option');o.value=x.id;o.textContent=(x.display_name||x.email||'學生')+' ('+(x.email||x.id)+')';manage.append(o);}
   if(previousManage && students.some(x=>x.id===previousManage))manage.value=previousManage;syncName();renderStudents();
-  if(!data?.length)say('目前沒有學生帳號。請先透過 Supabase Auth 建立測試學生及 profiles 紀錄。');
+  if(!data?.length)say('目前沒有學生帳號。請至學生管理新增學生。');
   await history();return true;
  }
  async function history(){const set=Number(($('hwCurrentTitle')?.textContent||'').match(/\d+/)?.[0]);if(!set)return;
@@ -52,12 +52,11 @@
  });
  $('hwAssignButton').addEventListener('click',async()=>{
   const student=$('hwAssignStudent').value,set=Number(($('hwCurrentTitle')?.textContent||'').match(/\d+/)?.[0]);
-  const opens=dt($('hwAssignOpen').value),due=dt($('hwAssignDue').value),until=dt($('hwAccessUntil').value);
-  if(!student||!set||!opens||!due||!until||new Date(due)<=new Date(opens)||new Date(until)<new Date(due)){say('請選學生並設定有效的開放、截止及權益日期（權益不得早於截止日）');return;}
+  const opens=dt($('hwAssignOpen').value),due=dt($('hwAssignDue').value);
+  if(!student||!set||!opens||!due||new Date(due)<=new Date(opens)){say('請選學生並設定有效的開放及截止時間');return;}
   if(!confirm(`確定指派 Homework ${set}？系統會立即固定抽題，不能重複指派。`))return;
   const b=$('hwAssignButton');b.disabled=true;
   try{
-   const {error:e1}=await supabaseClient.rpc('hw_v804_grant_access',{p_student:student,p_until:until});if(e1)throw e1;
    const {data,error}=await supabaseClient.rpc('hw_v804_assign',{p_student:student,p_set:set,p_opens:opens,p_due:due});if(error)throw error;
    say('指派成功！作業 ID：'+data+'。題目已在資料庫固定分配。');await history();
   }catch(e){say('指派未完成：'+(e.message||e)+'。如題庫不足，資料庫會撤回該次作業與抽題。');}finally{b.disabled=false;}

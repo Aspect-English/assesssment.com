@@ -1,1 +1,1 @@
-D6.1 UI only. Replace the three files in GitHub root. No SQL or Edge Function changes. Commit and push, then Ctrl+F5.
+D7 安裝：先備份資料庫與 GitHub，執行 V9_0_1_D7_INSTALL.sql，再覆蓋四個前端檔案並 Push。無需部署 Edge Function。既有有效作業代碼會自動開通權益；撤銷或過期代碼不會開通。此政策適用所有已有作業代碼的學生，會覆蓋其舊權益期限。作業指派不再獨立設定權益。請先測試現有代碼、期限修改、停用及作業指派。尚未線上測試；已登入學生的即時停權與完整作業作答功能不在本次範圍。舊版作業指派介面在 SQL 更新後會被拒絕，請立即更新前端。
