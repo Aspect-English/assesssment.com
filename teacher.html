@@ -17,7 +17,7 @@
 
   <link rel="stylesheet" href="teacher.css?v=7.3.0">
   <link rel="stylesheet" href="homework-management.css?v=8.0.6-student-layout">
-<link rel="stylesheet" href="portal-v9.css?v=9.0.0"></head>
+<link rel="stylesheet" href="portal-v9.css?v=9.0.0"><style>#studentEditDialog{width:min(680px,calc(100% - 24px));max-height:90vh;max-height:90dvh;overflow:auto;border:1px solid #d6dbea;border-radius:16px;padding:20px;background:#fff;color:#18243a;box-sizing:border-box}#studentEditDialog::backdrop{background:rgba(20,20,40,.55)}#studentEditDialog .d3-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}#studentEditDialog .sm-card{margin:0 0 12px;padding:16px;box-shadow:none}#studentEditDialog input:not([hidden]){max-width:100%;box-sizing:border-box}#hwStudentRows tr{cursor:pointer}#hwStudentRows tr:hover{background:#f0edf9}#studentEditDialog [hidden]{display:none!important}</style></head>
 
 <body class="auth-checking">
 
@@ -649,18 +649,18 @@
         </div>
       </section>
       <section id="studentManagementSection" class="portal-section">
-        <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V9.0.1-D2</span></h2>
+        <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V9.0.1-D3</span></h2>
           <p class="sm-intro">管理學生姓名及登入帳號資料。作業指派請至「作業管理」。</p>
           <section class="sm-card"><div class="sm-heading"><h3>學生清單 <span id="hwStudentCount" class="hw-tag"></span></h3><button type="button" id="hwStudentReload">重新載入學生</button></div>
             <label for="hwStudentSearch">搜尋學生</label><input id="hwStudentSearch" type="search" placeholder="輸入姓名或 Email" autocomplete="off">
             <div class="sm-table-wrap"><table class="sm-table"><thead><tr><th>學生姓名</th><th>電子郵件</th><th>操作</th></tr></thead><tbody id="hwStudentRows"></tbody></table></div>
           </section>
-          <section id="v901dHomeworkPanel" class="sm-card"></section>
-          <section class="hw-student-editor sm-card"><h3>編輯學生資料</h3>
-            <label for="hwManageStudent">選擇學生</label><select id="hwManageStudent"><option value="">請選擇學生</option></select>
+          <dialog id="studentEditDialog" aria-labelledby="studentEditTitle"><div class="d3-heading"><h3 id="studentEditTitle">編輯學生資料</h3><button type="button" id="studentEditClose" aria-label="關閉">關閉 ×</button></div>
+          <section class="hw-student-editor sm-card">
+            <div hidden><label for="hwManageStudent">選擇學生</label><select id="hwManageStudent"><option value="">請選擇學生</option></select></div>
             <label for="hwStudentName">學生姓名</label><input id="hwStudentName" maxlength="80" placeholder="先從上方選擇學生" autocomplete="off">
             <button type="button" id="hwStudentRename">儲存學生姓名</button><p id="hwStudentMessage" role="status" aria-live="polite"></p>
-          </section><p class="sm-intro">新增登入帳號仍須由管理員在 Supabase Authentication 建立並設定 student 角色，完成後重新載入學生。</p>
+          </section><section id="v901dHomeworkPanel" class="sm-card"></section></dialog>
         </div></section>
       <section
         id="studentsSection"
@@ -1477,5 +1477,5 @@
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
 
-<script src="teacher-code-v901d.js?v=9.0.1d2"></script></body>
+<script src="teacher-code-v901d.js?v=9.0.1d3"></script></body>
 </html>
