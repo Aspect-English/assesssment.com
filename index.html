@@ -49,7 +49,7 @@
           </p>
         </div>
 
-        <div class="v9-entry"><button type="button" id="v9Exam" aria-pressed="true">程度檢測<br><small>Assessment Center</small></button><button type="button" id="v9Homework" aria-pressed="false">作業繳交<br><small>Homework Center</small></button></div><div id="v9HomeworkNotice" hidden><p>在家作業入口正在整合，尚未開放作答。請向老師確認作業安排。</p></div><div id="v9ExamForm"><div id="v901Login" class="form-group"><label for="v901Name">學生姓名</label><input id="v901Name" maxlength="80" autocomplete="off"><label id="v901CodeLabel" for="v901Code">測驗代碼</label><input id="v901Code" type="password" autocomplete="off"><button type="button" id="v901SignIn" class="primary-button">確認身分</button></div><p id="v901Status" role="status"></p><button type="button" id="v901SignOut" hidden>登出</button><div id="v901ExamFields"><div class="form-group">
+        <div class="v9-entry"><button type="button" id="v9Exam" aria-pressed="true">程度檢測<br><small>Assessment Center</small></button><button type="button" id="v9Homework" aria-pressed="false">作業繳交<br><small>Homework Center</small></button></div><div id="v9HomeworkNotice" hidden><p>在家作業入口正在整合，尚未開放作答。請向老師確認作業安排。</p></div><div id="v9ExamForm"><div id="v901Login" class="form-group"><label for="v901Name">學生姓名</label><input id="v901Name" maxlength="80" autocomplete="off"><label id="v901CodeLabel" for="v901Code">測驗代碼</label><input id="v901Code" type="password" autocomplete="off"><button type="button" id="v901SignIn" class="primary-button">確認身分</button></div><p id="v901Status" role="status"></p><button type="button" id="v901SignOut" hidden>登出</button><div id="v901ExamFields" hidden><div id="v902Cards" aria-label="可用測驗" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0"></div><div class="form-group" hidden>
           <label for="studentName">學生姓名</label>
 
           <input
@@ -61,9 +61,9 @@
         </div>
 
         <div class="form-group">
-          <label for="testType">測驗類型</label>
+          <label>請選擇已開放的測驗</label>
 
-          <select id="testType" disabled>
+          <select id="testType" disabled style="display:none" aria-hidden="true" tabindex="-1">
             <option value="">請選擇測驗類型</option>
 
             <option value="quick">
@@ -91,7 +91,7 @@
           class="primary-button"
           type="button"
         >
-          進入設備測試
+          開始測驗
         </button></div></div>
 
       </div>
@@ -809,7 +809,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="config.js"></script>
-<script src="supabase-service.js?v=9.0.1d-hotfix1"></script>
+<script src="supabase-service.js"></script>
 
 <script src="utils.js"></script>
 <script src="session.js"></script>
@@ -825,6 +825,6 @@
 <script src="app.js?v=9.0.1"></script>
 <script src="pwa-register.js?v=github-pages-v7"></script>
 
-<script src="student-access-v901.js?v=9.0.1d"></script></body>
+<script src="student-access-v901.js?v=9.0.2a"></script></body>
 
 </html>
