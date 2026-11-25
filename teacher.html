@@ -137,7 +137,7 @@
 
         </div>
 
-        <div class="version-chip">V9.0.1-D5</div>
+        <div class="version-chip">V9.0.1-D6</div>
 
         <a
           class="student-link"
@@ -649,11 +649,11 @@
         </div>
       </section>
       <section id="studentManagementSection" class="portal-section">
-        <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V9.0.1-D5</span></h2>
+        <div class="hw-wrap sm-wrap"><h2>學生管理 <span class="hw-tag">V9.0.1-D6</span></h2>
           <p class="sm-intro">管理學生姓名及專屬代碼。作業指派請至「作業管理」。</p>
           <section class="sm-card"><div class="sm-heading"><h3>學生清單 <span id="hwStudentCount" class="hw-tag"></span></h3><div><button type="button" id="d5AddStudent">＋ 新增學生</button> <button type="button" id="hwStudentReload">重新載入學生</button></div></div>
             <label for="hwStudentSearch">搜尋學生</label><input id="hwStudentSearch" type="search" placeholder="輸入學生姓名" autocomplete="off">
-            <div class="sm-table-wrap"><table class="sm-table"><thead><tr><th>學生姓名</th><th>代碼到期日</th><th>狀態</th><th>操作</th></tr></thead><tbody id="hwStudentRows"></tbody></table></div>
+            <p id="d6StudentMsg" role="status" aria-live="polite"></p><div class="sm-table-wrap"><table class="sm-table"><thead><tr><th>學生姓名</th><th>代碼到期日</th><th>狀態</th><th>操作</th></tr></thead><tbody id="hwStudentRows"></tbody></table></div>
           </section>
           <dialog id="d5CreateDialog" style="width:min(440px,90%);border:1px solid #d6dbea;border-radius:16px;padding:24px"><h3>新增學生</h3><form id="d5CreateForm"><label for="d5Name">學生姓名</label><input id="d5Name" required maxlength="80" autocomplete="off"><p>系統自動建立底層身分，不需學生 Email 或密碼。</p><button type="submit">建立學生</button> <button type="button" id="d5Cancel">取消</button><p id="d5CreateMsg" role="status"></p></form></dialog><dialog id="studentEditDialog" aria-labelledby="studentEditTitle"><div class="d3-heading"><h3 id="studentEditTitle">編輯學生資料</h3><button type="button" id="studentEditClose" aria-label="關閉">關閉 ×</button></div>
           <section class="hw-student-editor sm-card">
@@ -1472,7 +1472,7 @@
   <script src="dashboard-service.js?v=5.0.1"></script>
   <script src="teacher.js?v=8.0.6-student-layout"></script>
   <script src="homework-management.js?v=8.0.4"></script>
-  <script src="homework-assignment-v804.js?v=9.0.1d5"></script>
+  <script src="homework-assignment-v804.js?v=9.0.1d6"></script>
   <script src="transcription-service.js?v=5.6.0"></script>
 <script src="question-editor.js?v=5.0.7-part3-group-edit"></script>
   <script src="test-builder.js?v=5.0.4"></script>
